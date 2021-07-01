@@ -23,6 +23,8 @@
     var characteristicUuid = "beb5483e-36e1-4688-b7f5-ea07361b26a8"
     var serviceUuid = "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
     var ph = document.getElementById("placeholder")
+    var limit = 0;
+
     function isWebBluetoothEnabled() {
       if (!navigator.bluetooth) {
         console.log('Web Bluetooth API is not available in this browser!')
@@ -59,24 +61,24 @@
         // getDeviceInfo()
         navigator.bluetooth.requestDevice({filters: [{services: [serviceUuid]}]})
   .then(device => {
-    console.log('Connecting to GATT Server...');
+    // console.log('Connecting to GATT Server...');
     ph.innerHTML = 'Connecting to GATT Server...'
     return device.gatt.connect();
   })
   .then(server => {
-    console.log('Getting Service...');
+    // console.log('Getting Service...');
     ph.innerHTML = ph.innerHTML + '<br> Getting Service...'
     return server.getPrimaryService(serviceUuid);
   })
   .then(service => {
-    console.log('Getting Characteristic...');
+    // console.log('Getting Characteristic...');
     ph.innerHTML = ph.innerHTML + '<br> Getting Characteristic...'
     return service.getCharacteristic(characteristicUuid);
   })
   .then(characteristic => {
     myCharacteristic = characteristic;
     return myCharacteristic.startNotifications().then(_ => {
-      console.log('> Notifications started');
+      // console.log('> Notifications started');
       ph.innerHTML = ph.innerHTML + '<br> > Notifications started'
       myCharacteristic.addEventListener('characteristicvaluechanged',
           handleNotifications);
@@ -98,9 +100,13 @@
   for (let i = 0; i < value.byteLength; i++) {
     a.push('0x' + ('00' + value.getUint8(i).toString(16)).slice(-2));
   }
-  console.log('> ' + a.join(' '));
-  ph.innerHTML = ph.innerHTML + '<br> '+ '> ' + a.join(' ')
+  // console.log('> ' + a.join(' '));
+  limit++
+  if(limit!=30){
+    ph.innerHTML = ph.innerHTML + '<br> '+ '> ' + a.join(' ')
 
+  }
+  
 }
 
   </script>
