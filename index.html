@@ -147,11 +147,11 @@
   else if(values==2){
     bird="Ajith"
   }
-  timestamp = new Date().toLocaleString();
-  let data={'bird':bird,'timestamp':timestamp}
+  timestamps = new Date().toLocaleString();
+  let data={'bird':bird,'timestamp':timestamps}
   data_json.push(data);
   // db.ref("/log/").push().set({'bird':bird})
-  ph.innerHTML = ph.innerHTML + '<br> '+ '> ' + bird + ' '+ timestamp;
+  ph.innerHTML = ph.innerHTML + '<br> '+ '> ' + bird + ' '+ timestamps;
   // let a = [];
   // // Convert raw data bytes to hex values just for the sake of showing something.
   // // In the "real" world, you'd use data.getUint8, data.getUint16 or even
@@ -162,23 +162,19 @@
 
   //   ph.innerHTML = ph.innerHTML + '<br> '+ '> ' + a.join(' ')
 
-  
-  
 }
 
 function download(){
-  var fileName = 'log.json';
-
-// Create a blob of the data
-var fileToSave = new Blob([JSON.stringify(data_json)], {
-    type: 'application/json',
-    name: fileName
-});
-
-// Save the file
-saveAs(fileToSave, fileName);
+downloadTextFile(JSON.stringify(data_json), 'myObj.json')
 }
 
+function downloadTextFile(text, name) {
+  const a = document.createElement('a');
+  const type = name.split(".").pop();
+  a.href = URL.createObjectURL( new Blob([text], { type:`text/${type === "txt" ? "plain" : type}` }) );
+  a.download = name;
+  a.click();
+}
   </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
 </body>
