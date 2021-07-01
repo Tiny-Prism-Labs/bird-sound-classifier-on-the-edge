@@ -146,7 +146,7 @@
     bird="Ajith"
   }
   
-  db.ref("/log/").push(bird)
+  db.ref("/log/").push().set({'bird':bird})
   ph.innerHTML = ph.innerHTML + '<br> '+ '> ' + bird
   // let a = [];
   // // Convert raw data bytes to hex values just for the sake of showing something.
