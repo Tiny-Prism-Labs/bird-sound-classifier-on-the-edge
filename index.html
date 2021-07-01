@@ -152,6 +152,7 @@
   // data_json.push(data);
   // db.ref("/log/").push().set({'bird':bird})
   ph.innerHTML = ph.innerHTML + '<br> '+ '> ' + bird +' '+timestamps;
+  data_json.push([bird,timestamps])
   // let a = [];
   // // Convert raw data bytes to hex values just for the sake of showing something.
   // // In the "real" world, you'd use data.getUint8, data.getUint16 or even
@@ -166,6 +167,7 @@
 
 function download(){
 downloadTextFile(JSON.stringify(data_json), 'myObj.json')
+data_json={}
 }
 
 function downloadTextFile(text, name) {
