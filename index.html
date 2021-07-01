@@ -10,12 +10,16 @@
 <body>
    <div class="container">
     <h1> Web BLE on the Edge</h1>
-    <br>
-    <h3><span id="placeholder"></span></h3>
+    
     <br>
     <form>
         <button>Connect with BLE device</button>
       </form>
+      <button onclick="startnotify()">Start Reading</button>
+      <br>
+      <button onclick="stopnotify()">Stop Reading</button>
+      <br>
+    <h3><span id="placeholder"></span></h3>
    </div>
 
    <script>
@@ -35,31 +39,24 @@
     }
   
     function getDeviceInfo() {
-      // let options = {
-      //   // acceptAllDevices: true // Option to accept all devices
-      //   "filters": [
-      //   //   { "name": deviceName }
-      //     {services: [serviceUuid]}
-      //   ]
-      // }
+      let options = {
+        // acceptAllDevices: true // Option to accept all devices
+        "filters": [
+        //   { "name": deviceName }
+          {services: [serviceUuid]}
+        ]
+      }
   
-      // console.log('Requesting Bluetooth Device...')
-      // navigator.bluetooth.requestDevice(options).then(device => {
-      //   console.log('> Name: ' + device.name)
-      // }).catch(error => {
-      //   console.log('Argh! ' + error)
-      // })
+      console.log('Requesting Bluetooth Device...')
+      navigator.bluetooth.requestDevice(options).then(device => {
+        console.log('> Name: ' + device.name)
+      }).catch(error => {
+        console.log('Argh! ' + error)
+      })
     }
   
-
-  
-    document.querySelector('form').addEventListener('submit', function(event) {
-      event.stopPropagation()
-      event.preventDefault()
-  
-      if (isWebBluetoothEnabled()) {
-        // getDeviceInfo()
-        navigator.bluetooth.requestDevice({filters: [{services: [serviceUuid]}]})
+    function startnotify(){
+      navigator.bluetooth.requestDevice({filters: [{services: [serviceUuid]}]})
   .then(device => {
     // console.log('Connecting to GATT Server...');
     ph.innerHTML = 'Connecting to GATT Server...'
@@ -87,6 +84,29 @@
   .catch(error => {
     console.log('Argh! ' + error);
   });
+    }
+
+    function stopnotify() {
+      if (myCharacteristic) {
+    myCharacteristic.stopNotifications()
+    .then(_ => {
+      // log('> Notifications stopped');
+      ph.innerHTML = ph.innerHTML + '<br> > Notifications stopped'
+      myCharacteristic.removeEventListener('characteristicvaluechanged',
+          handleNotifications);
+    })
+    .catch(error => {
+      log('Argh! ' + error);
+    });
+  }
+    }
+  
+    document.querySelector('form').addEventListener('submit', function(event) {
+      event.stopPropagation()
+      event.preventDefault()
+  
+      if (isWebBluetoothEnabled()) {
+        getDeviceInfo()   
 
       }
     })
@@ -100,12 +120,10 @@
   for (let i = 0; i < value.byteLength; i++) {
     a.push('0x' + ('00' + value.getUint8(i).toString(16)).slice(-2));
   }
-  // console.log('> ' + a.join(' '));
-  limit++
-  if(limit!=30){
+
     ph.innerHTML = ph.innerHTML + '<br> '+ '> ' + a.join(' ')
 
-  }
+  
   
 }
 
