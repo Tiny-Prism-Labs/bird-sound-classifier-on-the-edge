@@ -11,6 +11,8 @@
    <div class="container">
     <h1> Web BLE on the Edge</h1>
     <br>
+    <h3><span id="placeholder"></span></h3>
+    <br>
     <form>
         <button>Connect with BLE device</button>
       </form>
@@ -18,7 +20,9 @@
 
    <script>
     var deviceName = 'Palm'
-  
+    var characteristicUuid = "beb5483e-36e1-4688-b7f5-ea07361b26a8"
+    var serviceUuid = "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
+    var ph = document.getElementById("placeholder")
     function isWebBluetoothEnabled() {
       if (!navigator.bluetooth) {
         console.log('Web Bluetooth API is not available in this browser!')
@@ -29,29 +33,76 @@
     }
   
     function getDeviceInfo() {
-      let options = {
-        acceptAllDevices: true // Option to accept all devices
-        // "filters": [
-        //   { "name": deviceName }
-        // ]
-      }
+      // let options = {
+      //   // acceptAllDevices: true // Option to accept all devices
+      //   "filters": [
+      //   //   { "name": deviceName }
+      //     {services: [serviceUuid]}
+      //   ]
+      // }
   
-      console.log('Requesting Bluetooth Device...')
-      navigator.bluetooth.requestDevice(options).then(device => {
-        console.log('> Name: ' + device.name)
-      }).catch(error => {
-        console.log('Argh! ' + error)
-      })
+      // console.log('Requesting Bluetooth Device...')
+      // navigator.bluetooth.requestDevice(options).then(device => {
+      //   console.log('> Name: ' + device.name)
+      // }).catch(error => {
+      //   console.log('Argh! ' + error)
+      // })
     }
+  
+
   
     document.querySelector('form').addEventListener('submit', function(event) {
       event.stopPropagation()
       event.preventDefault()
   
       if (isWebBluetoothEnabled()) {
-        getDeviceInfo()
+        // getDeviceInfo()
+        navigator.bluetooth.requestDevice({filters: [{services: [serviceUuid]}]})
+  .then(device => {
+    console.log('Connecting to GATT Server...');
+    ph.innerHTML = 'Connecting to GATT Server...'
+    return device.gatt.connect();
+  })
+  .then(server => {
+    console.log('Getting Service...');
+    ph.innerHTML = ph.innerHTML + '<br> Getting Service...'
+    return server.getPrimaryService(serviceUuid);
+  })
+  .then(service => {
+    console.log('Getting Characteristic...');
+    ph.innerHTML = ph.innerHTML + '<br> Getting Characteristic...'
+    return service.getCharacteristic(characteristicUuid);
+  })
+  .then(characteristic => {
+    myCharacteristic = characteristic;
+    return myCharacteristic.startNotifications().then(_ => {
+      console.log('> Notifications started');
+      ph.innerHTML = ph.innerHTML + '<br> > Notifications started'
+      myCharacteristic.addEventListener('characteristicvaluechanged',
+          handleNotifications);
+    });
+  })
+  .catch(error => {
+    console.log('Argh! ' + error);
+  });
+
       }
     })
+
+    function handleNotifications(event) {
+  let value = event.target.value;
+  let a = [];
+  // Convert raw data bytes to hex values just for the sake of showing something.
+  // In the "real" world, you'd use data.getUint8, data.getUint16 or even
+  // TextDecoder to process raw data bytes.
+  for (let i = 0; i < value.byteLength; i++) {
+    a.push('0x' + ('00' + value.getUint8(i).toString(16)).slice(-2));
+  }
+  console.log('> ' + a.join(' '));
+  ph.innerHTML = ph.innerHTML + '<br> '+ '> ' + a.join(' ')
+
+}
+
   </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
 </body>
