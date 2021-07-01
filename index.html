@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edge Web BLE</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+</head>
+<body>
+   <div class="container">
+    <h1> Web BLE on the Edge</h1>
+    <br>
+    <form>
+        <button>Connect with BLE device</button>
+      </form>
+   </div>
+
+   <script>
+    var deviceName = 'Palm'
+  
+    function isWebBluetoothEnabled() {
+      if (!navigator.bluetooth) {
+        console.log('Web Bluetooth API is not available in this browser!')
+        return false
+      }
+  
+      return true
+    }
+  
+    function getDeviceInfo() {
+      let options = {
+        acceptAllDevices: true // Option to accept all devices
+        // "filters": [
+        //   { "name": deviceName }
+        // ]
+      }
+  
+      console.log('Requesting Bluetooth Device...')
+      navigator.bluetooth.requestDevice(options).then(device => {
+        console.log('> Name: ' + device.name)
+      }).catch(error => {
+        console.log('Argh! ' + error)
+      })
+    }
+  
+    document.querySelector('form').addEventListener('submit', function(event) {
+      event.stopPropagation()
+      event.preventDefault()
+  
+      if (isWebBluetoothEnabled()) {
+        getDeviceInfo()
+      }
+    })
+  </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+</body>
+</html>
