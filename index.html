@@ -6,6 +6,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edge Web BLE</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <!-- The core Firebase JS SDK is always required and must be listed first -->
+<script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+
+<!-- TODO: Add SDKs for Firebase products that you want to use
+     https://firebase.google.com/docs/web/setup#available-libraries -->
+
+<script>
+  // Your web app's Firebase configuration
+  var firebaseConfig = {
+    apiKey: "AIzaSyBtDUzQ4IDDMu3hKTUcpJJnsrSc2cK8jXE",
+    authDomain: "osm-animal-sanctuary-e60fc.firebaseapp.com",
+    databaseURL: "https://osm-animal-sanctuary-e60fc-default-rtdb.firebaseio.com",
+    projectId: "osm-animal-sanctuary-e60fc",
+    storageBucket: "osm-animal-sanctuary-e60fc.appspot.com",
+    messagingSenderId: "74125657940",
+    appId: "1:74125657940:web:7e2f4913cd0c5fc7292ac1"
+  };
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+</script>
 </head>
 <body>
    <div class="container">
@@ -23,12 +43,11 @@
    </div>
 
    <script>
-    var deviceName = 'Palm'
     var characteristicUuid = "beb5483e-36e1-4688-b7f5-ea07361b26a8"
     var serviceUuid = "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
     var ph = document.getElementById("placeholder")
     var limit = 0;
-
+    var db= firebase.database();
     function isWebBluetoothEnabled() {
       if (!navigator.bluetooth) {
         console.log('Web Bluetooth API is not available in this browser!')
@@ -113,7 +132,20 @@
 
     function handleNotifications(event) {
   let value = event.target.value;
-  ph.innerHTML = ph.innerHTML + '<br> '+ '> ' + value.getUint8(0)
+  value = value.getUint8(0)
+  let bird = ""
+  if(value== 0){
+    bird = "Mahesh"
+  }
+  else if(value == 1){
+    bird = "Supriya"
+  }
+  else if(value==2){
+    bird="Ajith"
+  }
+  
+  db.ref("/log/").push(bird)
+  ph.innerHTML = ph.innerHTML + '<br> '+ '> ' + bird
   // let a = [];
   // // Convert raw data bytes to hex values just for the sake of showing something.
   // // In the "real" world, you'd use data.getUint8, data.getUint16 or even
