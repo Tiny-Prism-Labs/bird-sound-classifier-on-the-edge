@@ -41,6 +41,8 @@
       <br>
       <button onclick="stopnotify()">Stop Reading</button>
       <br>
+      <button onclick="download()">Download Logged Data</button>
+      <br>
     <h3><span id="placeholder"></span></h3>
    </div>
 
@@ -49,7 +51,7 @@
     var serviceUuid = "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
     var ph = document.getElementById("placeholder")
     var limit = 0;
-    
+    var data_json={}
     function isWebBluetoothEnabled() {
       if (!navigator.bluetooth) {
         console.log('Web Bluetooth API is not available in this browser!')
@@ -145,9 +147,11 @@
   else if(values==2){
     bird="Ajith"
   }
-  
-  db.ref("/log/").push().set({'bird':bird})
-  ph.innerHTML = ph.innerHTML + '<br> '+ '> ' + bird
+  timestamp = new Date().toLocaleString();
+  let data={'bird':bird,'timestamp':timestamp}
+  data_json.push(data);
+  // db.ref("/log/").push().set({'bird':bird})
+  ph.innerHTML = ph.innerHTML + '<br> '+ '> ' + bird + ' '+ timestamp;
   // let a = [];
   // // Convert raw data bytes to hex values just for the sake of showing something.
   // // In the "real" world, you'd use data.getUint8, data.getUint16 or even
@@ -160,6 +164,19 @@
 
   
   
+}
+
+function download(){
+  var fileName = 'log.json';
+
+// Create a blob of the data
+var fileToSave = new Blob([JSON.stringify(data_json)], {
+    type: 'application/json',
+    name: fileName
+});
+
+// Save the file
+saveAs(fileToSave, fileName);
 }
 
   </script>
