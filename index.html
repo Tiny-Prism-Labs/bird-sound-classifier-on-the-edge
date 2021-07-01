@@ -147,11 +147,11 @@
   else if(values==2){
     bird="Ajith"
   }
-  // timestamps = new Date().toLocaleString();
+  timestamps = new Date().toLocaleString();
   // let data={'bird':bird}
   // data_json.push(data);
   // db.ref("/log/").push().set({'bird':bird})
-  ph.innerHTML = ph.innerHTML + '<br> '+ '> ' + bird ;
+  ph.innerHTML = ph.innerHTML + '<br> '+ '> ' + bird +' '+timestamps;
   // let a = [];
   // // Convert raw data bytes to hex values just for the sake of showing something.
   // // In the "real" world, you'd use data.getUint8, data.getUint16 or even
