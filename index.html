@@ -149,7 +149,8 @@
   }
   timestamps = new Date().toLocaleString();
   // let data={'bird':bird}
-  // data_json.push(data);
+  data_json.push(data);
+  console.log(data_json)
   // db.ref("/log/").push().set({'bird':bird})
   ph.innerHTML = ph.innerHTML + '<br> '+ '> ' + bird +' '+timestamps;
   data_json.push([bird,timestamps])
@@ -166,6 +167,7 @@
 }
 
 function download(){
+  console.log(data_json)
 downloadTextFile(JSON.stringify(data_json), 'myObj.json')
 
 }
