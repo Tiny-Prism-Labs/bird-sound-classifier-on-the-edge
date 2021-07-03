@@ -137,21 +137,22 @@
     function handleNotifications(event) {
   let value = event.target.value;
   values = value.getUint8(0)
+  timestamps = new Date().toLocaleString();
   let bird = ""
   if(values== 0){
   
     bird = "Mahesh"
-    data_json.push(bird)
+    data_json.push([bird,timestamps])
   }
   else if(values == 1){
     bird = "Supriya"
-    data_json.push(bird)
+    data_json.push([bird,timestamps])
   }
   else if(values==2){
     bird="Ajith"
-    data_json.push(bird)
+    data_json.push([bird,timestamps])
   }
-  timestamps = new Date().toLocaleString();
+ 
   // let data={'bird':bird}
   // db.ref("/log/").push().set({'bird':bird})
   ph.innerHTML = ph.innerHTML + '<br> '+ '> ' + bird +' '+timestamps;
