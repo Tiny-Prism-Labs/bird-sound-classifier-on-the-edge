@@ -51,7 +51,7 @@
     var serviceUuid = "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
     var ph = document.getElementById("placeholder")
     var limit = 0;
-    var data_json={}
+    var data_json=[]
     function isWebBluetoothEnabled() {
       if (!navigator.bluetooth) {
         console.log('Web Bluetooth API is not available in this browser!')
@@ -139,6 +139,7 @@
   values = value.getUint8(0)
   let bird = ""
   if(values== 0){
+  
     bird = "Mahesh"
   }
   else if(values == 1){
@@ -149,11 +150,10 @@
   }
   timestamps = new Date().toLocaleString();
   // let data={'bird':bird}
-  data_json.push(data);
-  console.log(data_json)
   // db.ref("/log/").push().set({'bird':bird})
   ph.innerHTML = ph.innerHTML + '<br> '+ '> ' + bird +' '+timestamps;
-  data_json.push([bird,timestamps])
+  // data_json.push([bird,timestamps])
+  data_json.push(bird)
   // let a = [];
   // // Convert raw data bytes to hex values just for the sake of showing something.
   // // In the "real" world, you'd use data.getUint8, data.getUint16 or even
