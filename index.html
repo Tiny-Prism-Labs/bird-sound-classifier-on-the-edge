@@ -140,18 +140,41 @@
   timestamps = new Date().toLocaleString();
   let bird = ""
   if(values== 0){
-  
-    bird = "Mahesh"
+    bird = "Asian_Koel"
     data_json.push([bird,timestamps])
   }
   else if(values == 1){
-    bird = "Supriya"
+    bird = "Laughing_Kookaburra"
     data_json.push([bird,timestamps])
   }
   else if(values==2){
-    bird="Ajith"
+    bird="Rose-ringed_Parakeet"
     data_json.push([bird,timestamps])
   }
+  else if(values==3){
+    bird="Square_Tailed_Drongo"
+    data_json.push([bird,timestamps])
+  }
+  else if(values==4){
+    bird="_noise"
+    data_json.push([bird,timestamps])
+  }
+
+
+
+  // if(values== 0){
+  
+  //   bird = "Mahesh"
+  //   data_json.push([bird,timestamps])
+  // }
+  // else if(values == 1){
+  //   bird = "Supriya"
+  //   data_json.push([bird,timestamps])
+  // }
+  // else if(values==2){
+  //   bird="Ajith"
+  //   data_json.push([bird,timestamps])
+  // }
  
   // let data={'bird':bird}
   // db.ref("/log/").push().set({'bird':bird})
