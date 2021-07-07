@@ -91,8 +91,8 @@
 
       var ph = document.getElementById("placeholder");
       var limit = 0;
-      var data_json = {};
-      
+      var data_json = [];
+
       function isWebBluetoothEnabled() {
         if (!navigator.bluetooth) {
           console.log("Web Bluetooth API is not available in this browser!");
@@ -188,31 +188,31 @@
         let bird = "";
         if (values == 0) {
           bird = "_noise";
-          data_json.push([bird, timestamps]);
+          data_json.push({'bird':bird, 'time':timestamps});
         } else if (values == 1) {
           bird = "Laughing_Kookaburra";
-          data_json.push([bird, timestamps]);
+          data_json.push({'bird':bird, 'time':timestamps});
         } else if (values == 2) {
           bird = "Rose-ringed_Parakeet";
-          data_json.push([bird, timestamps]);
+          data_json.push({'bird':bird, 'time':timestamps});
         } else if (values == 3) {
           bird = "Square_Tailed_Drongo";
-          data_json.push([bird, timestamps]);
+          data_json.push({'bird':bird, 'time':timestamps});
         } else if (values == 4) {
           bird = "Asian_Koel";
-          data_json.push([bird, timestamps]);
+          data_json.push({'bird':bird, 'time':timestamps});
         } else if (values == 5) {
           bird = "Greater_Coucal";
-          data_json.push([bird, timestamps]);
+          data_json.push({'bird':bird, 'time':timestamps});
         } else if (values == 6) {
           bird = "House_Crow";
-          data_json.push([bird, timestamps]);
+          data_json.push({'bird':bird, 'time':timestamps});
         } else if (values == 7) {
           bird = "Purple-rumped_Sunbird";
-          data_json.push([bird, timestamps]);
+          data_json.push({'bird':bird, 'time':timestamps});
         } else if (values == 8) {
           bird = "Red-whiskered_Bulbul";
-          data_json.push([bird, timestamps]);
+          data_json.push({'bird':bird, 'time':timestamps});
         }
 
         ph.innerHTML = ph.innerHTML + "<br> " + "> " + bird + " " + timestamps;
