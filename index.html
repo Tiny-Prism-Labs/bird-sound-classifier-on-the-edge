@@ -124,24 +124,24 @@
         navigator.bluetooth
           .requestDevice({ filters: [{ services: [serviceUuid] }] })
           .then((device) => {
-            ph.innerHTML = "Connecting to GATT Server...";
+            ph.innerHTML = "<strong>Connecting to GATT Server...</strong>";
             return device.gatt.connect();
           })
           .then((server) => {
 
-            ph.innerHTML = ph.innerHTML + "<br> Getting Service...";
+            ph.innerHTML = ph.innerHTML + "<br> <strong>Getting Service...</strong>";
             return server.getPrimaryService(serviceUuid);
           })
           .then((service) => {
 
-            ph.innerHTML = ph.innerHTML + "<br> Getting Characteristic...";
+            ph.innerHTML = ph.innerHTML + "<br> <strong>Getting Characteristic...</strong>";
             return service.getCharacteristic(characteristicUuid);
           })
           .then((characteristic) => {
             myCharacteristic = characteristic;
             return myCharacteristic.startNotifications().then((_) => {
               // console.log('> Notifications started');
-              ph.innerHTML = ph.innerHTML + "<br> > Notifications started";
+              ph.innerHTML = ph.innerHTML + "<br> <strong>Notifications started</strong>";
               myCharacteristic.addEventListener(
                 "characteristicvaluechanged",
                 handleNotifications
@@ -158,7 +158,7 @@
           myCharacteristic
             .stopNotifications()
             .then((_) => {
-              ph.innerHTML = ph.innerHTML + "<br> > Notifications stopped";
+              ph.innerHTML = ph.innerHTML + "<br> <strong> Notifications stopped</strong>";
               myCharacteristic.removeEventListener(
                 "characteristicvaluechanged",
                 handleNotifications
@@ -185,37 +185,38 @@
         let value = event.target.value;
         values = value.getUint8(0);
         timestamps = new Date().toLocaleString();
+        time = new Date().toLocaleTimeString();
         let bird = "";
         if (values == 0) {
-          bird = "_noise";
+          bird = "Noise";
           data_json.push({'bird':bird, 'time':timestamps});
         } else if (values == 1) {
-          bird = "Laughing_Kookaburra";
+          bird = "Laughing Kookaburra";
           data_json.push({'bird':bird, 'time':timestamps});
         } else if (values == 2) {
-          bird = "Rose-ringed_Parakeet";
+          bird = "Rose-ringed Parakeet";
           data_json.push({'bird':bird, 'time':timestamps});
         } else if (values == 3) {
-          bird = "Square_Tailed_Drongo";
+          bird = "Square Tailed Drongo";
           data_json.push({'bird':bird, 'time':timestamps});
         } else if (values == 4) {
-          bird = "Asian_Koel";
+          bird = "Asian Koel";
           data_json.push({'bird':bird, 'time':timestamps});
         } else if (values == 5) {
-          bird = "Greater_Coucal";
+          bird = "Greater Coucal";
           data_json.push({'bird':bird, 'time':timestamps});
         } else if (values == 6) {
-          bird = "House_Crow";
+          bird = "House Crow";
           data_json.push({'bird':bird, 'time':timestamps});
         } else if (values == 7) {
-          bird = "Purple-rumped_Sunbird";
+          bird = "Purple-rumped Sunbird";
           data_json.push({'bird':bird, 'time':timestamps});
         } else if (values == 8) {
-          bird = "Red-whiskered_Bulbul";
+          bird = "Red-whiskered Bulbul";
           data_json.push({'bird':bird, 'time':timestamps});
         }
 
-        ph.innerHTML = ph.innerHTML + "<br> " + "> " + bird + " " + timestamps;
+        ph.innerHTML = ph.innerHTML + "<br> " + "-> " + time + " : " + bird;
       }
 
       function download() {
