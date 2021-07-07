@@ -1,194 +1,244 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Edge Web BLE</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
+      crossorigin="anonymous"
+    />
+    <style>
+      /* .fix-height{
+    height: 10em;
+  } */
+      /* #placeholder{
+    height: 10em;
 
-
-</head>
-<body>
-   <div class="container">
-    <h1> Web BLE on the Edge</h1>
-    
-    <br>
-      <button type="button" class="btn btn-primary" onclick="startnotify()">Start Reading</button>
-      <br>
-      <br>
-      <button  type="button" class="btn btn-danger" onclick="stopnotify()">Stop Reading</button>
-      <br>
-      <br>
-      <button type="button" class="btn btn-info" onclick="download()">Download Logged Data</button>
-      <br><br>
-      <div class="overflow-auto">
-        <span id="placeholder"></span>
+  } */
+      .scroll {
+        max-height: 300px;
+        overflow-y: auto;
+      }
+      .container {
+        justify-content: center;
+      }
+      .btn-start{
+        background-color: rgba(90, 222, 87, 1);
+        
+      }
+      .btn-stop{
+        background-color: rgba(233, 103, 103, 1);
+      }
+      .btn-dwnld{
+        background-color: rgba(95, 231, 206, 1);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="d-flex justify-content-center pt-3">
+        <h2>Bird sound classifier over BLE</h2>
       </div>
-    
-   </div>
 
-   <script>
-    var characteristicUuid = "beb5483e-36e1-4688-b7f5-ea07361b26a8"
-    var serviceUuid = "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
-    var ph = document.getElementById("placeholder")
-    var limit = 0;
-    var data_json=[]
-    function isWebBluetoothEnabled() {
-      if (!navigator.bluetooth) {
-        console.log('Web Bluetooth API is not available in this browser!')
-        return false
+      <br />
+      <div class="d-flex justify-content-center">
+        <div class="pe-5">
+          <button type="button" class="btn btn-start" onclick="startnotify()">
+            <strong> Start BLE</strong>
+          </button>
+        </div>
+        <div>
+          <button type="button" class="btn btn-stop" onclick="stopnotify()">
+           <strong> Stop BLE</strong>
+          </button>
+        </div>
+      </div>
+
+      <br /><br />
+      <div class="card scroll">
+        <div class="card-body">
+          <span id="placeholder">
+               </div>
+      </div>
+      <br />
+      <br />
+      <div class="d-flex justify-content-center">
+        <button type="button" class="btn btn-dwnld" onclick="download()">
+          <strong>Download Logs</strong> 
+        </button>
+      </div>
+    </div>
+
+    <script>
+      var characteristicUuid = "beb5483e-36e1-4688-b7f5-ea07361b26a8";
+      var serviceUuid = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
+      var ph = document.getElementById("placeholder");
+      var limit = 0;
+      var data_json = [];
+      function isWebBluetoothEnabled() {
+        if (!navigator.bluetooth) {
+          console.log("Web Bluetooth API is not available in this browser!");
+          return false;
+        }
+
+        return true;
       }
-  
-      return true
-    }
-  
-    function getDeviceInfo() {
-      let options = {
-        // acceptAllDevices: true // Option to accept all devices
-        "filters": [
-        //   { "name": deviceName }
-          {services: [serviceUuid]}
-        ]
+
+      function getDeviceInfo() {
+        let options = {
+          // acceptAllDevices: true // Option to accept all devices
+          filters: [
+            //   { "name": deviceName }
+            { services: [serviceUuid] },
+          ],
+        };
+
+        console.log("Requesting Bluetooth Device...");
+        navigator.bluetooth
+          .requestDevice(options)
+          .then((device) => {
+            console.log("> Name: " + device.name);
+          })
+          .catch((error) => {
+            console.log("Argh! " + error);
+          });
       }
-  
-      console.log('Requesting Bluetooth Device...')
-      navigator.bluetooth.requestDevice(options).then(device => {
-        console.log('> Name: ' + device.name)
-      }).catch(error => {
-        console.log('Argh! ' + error)
-      })
-    }
-  
-    function startnotify(){
-      navigator.bluetooth.requestDevice({filters: [{services: [serviceUuid]}]})
-  .then(device => {
-    // console.log('Connecting to GATT Server...');
-    ph.innerHTML = 'Connecting to GATT Server...'
-    return device.gatt.connect();
-  })
-  .then(server => {
-    // console.log('Getting Service...');
-    ph.innerHTML = ph.innerHTML + '<br> Getting Service...'
-    return server.getPrimaryService(serviceUuid);
-  })
-  .then(service => {
-    // console.log('Getting Characteristic...');
-    ph.innerHTML = ph.innerHTML + '<br> Getting Characteristic...'
-    return service.getCharacteristic(characteristicUuid);
-  })
-  .then(characteristic => {
-    myCharacteristic = characteristic;
-    return myCharacteristic.startNotifications().then(_ => {
-      // console.log('> Notifications started');
-      ph.innerHTML = ph.innerHTML + '<br> > Notifications started'
-      myCharacteristic.addEventListener('characteristicvaluechanged',
-          handleNotifications);
-    });
-  })
-  .catch(error => {
-    console.log('Argh! ' + error);
-  });
-    }
 
-    function stopnotify() {
-      if (myCharacteristic) {
-    myCharacteristic.stopNotifications()
-    .then(_ => {
-      // log('> Notifications stopped');
-      ph.innerHTML = ph.innerHTML + '<br> > Notifications stopped'
-      myCharacteristic.removeEventListener('characteristicvaluechanged',
-          handleNotifications);
-    })
-    .catch(error => {
-      log('Argh! ' + error);
-    });
-  }
-    }
-  
-    document.querySelector('form').addEventListener('submit', function(event) {
-      event.stopPropagation()
-      event.preventDefault()
-  
-      if (isWebBluetoothEnabled()) {
-        getDeviceInfo()   
-
+      function startnotify() {
+        navigator.bluetooth
+          .requestDevice({ filters: [{ services: [serviceUuid] }] })
+          .then((device) => {
+            // console.log('Connecting to GATT Server...');
+            ph.innerHTML = "Connecting to GATT Server...";
+            return device.gatt.connect();
+          })
+          .then((server) => {
+            // console.log('Getting Service...');
+            ph.innerHTML = ph.innerHTML + "<br> Getting Service...";
+            return server.getPrimaryService(serviceUuid);
+          })
+          .then((service) => {
+            // console.log('Getting Characteristic...');
+            ph.innerHTML = ph.innerHTML + "<br> Getting Characteristic...";
+            return service.getCharacteristic(characteristicUuid);
+          })
+          .then((characteristic) => {
+            myCharacteristic = characteristic;
+            return myCharacteristic.startNotifications().then((_) => {
+              // console.log('> Notifications started');
+              ph.innerHTML = ph.innerHTML + "<br> > Notifications started";
+              myCharacteristic.addEventListener(
+                "characteristicvaluechanged",
+                handleNotifications
+              );
+            });
+          })
+          .catch((error) => {
+            console.log("Argh! " + error);
+          });
       }
-    })
 
-    function handleNotifications(event) {
-  let value = event.target.value;
-  values = value.getUint8(0)
-  timestamps = new Date().toLocaleString();
-  let bird = ""
-  if(values== 0){
-    bird = "_noise"
-    data_json.push([bird,timestamps])
-  }
-  else if(values == 1){
-    bird = "Laughing_Kookaburra"
-    data_json.push([bird,timestamps,values])
-  }
-  else if(values==2){
-    bird="Rose-ringed_Parakeet"
-    data_json.push([bird,timestamps,values])
-  }
-  else if(values==3){
-    bird="Square_Tailed_Drongo"
-    data_json.push([bird,timestamps,values])
-  }
-  else if(values==4){
-    bird="Asian_Koel"
-    data_json.push([bird,timestamps,values])
-  }
-  else if(values==5){
-    bird="Greater_Coucal"
-    data_json.push([bird,timestamps,values])
-  }
-  else if(values==6){
-    bird="House_Crow"
-    data_json.push([bird,timestamps,values])
-  }
-  else if(values==7){
-    bird="Purple-rumped_Sunbird"
-    data_json.push([bird,timestamps,values])
-  }
-  else if(values==8){
-    bird="Red-whiskered_Bulbul"
-    data_json.push([bird,timestamps,values])
-  }
+      function stopnotify() {
+        if (myCharacteristic) {
+          myCharacteristic
+            .stopNotifications()
+            .then((_) => {
+              // log('> Notifications stopped');
+              ph.innerHTML = ph.innerHTML + "<br> > Notifications stopped";
+              myCharacteristic.removeEventListener(
+                "characteristicvaluechanged",
+                handleNotifications
+              );
+            })
+            .catch((error) => {
+              log("Argh! " + error);
+            });
+        }
+      }
 
+      document
+        .querySelector("form")
+        .addEventListener("submit", function (event) {
+          event.stopPropagation();
+          event.preventDefault();
 
-  // db.ref("/log/").push().set({'bird':bird})
-  ph.innerHTML = ph.innerHTML + '<br> '+ '> ' + bird +' '+timestamps;
-  // data_json.push([bird,timestamps])
-  
-  // let a = [];
-  // // Convert raw data bytes to hex values just for the sake of showing something.
-  // // In the "real" world, you'd use data.getUint8, data.getUint16 or even
-  // // TextDecoder to process raw data bytes.
-  // for (let i = 0; i < value.byteLength; i++) {
-  //   a.push('0x' + ('00' + value.getUint8(i).toString(16)).slice(-2));
-  // }
+          if (isWebBluetoothEnabled()) {
+            getDeviceInfo();
+          }
+        });
 
-  //   ph.innerHTML = ph.innerHTML + '<br> '+ '> ' + a.join(' ')
+      function handleNotifications(event) {
+        let value = event.target.value;
+        values = value.getUint8(0);
+        timestamps = new Date().toLocaleString();
+        let bird = "";
+        if (values == 0) {
+          bird = "_noise";
+          data_json.push([bird, timestamps]);
+        } else if (values == 1) {
+          bird = "Laughing_Kookaburra";
+          data_json.push([bird, timestamps, values]);
+        } else if (values == 2) {
+          bird = "Rose-ringed_Parakeet";
+          data_json.push([bird, timestamps, values]);
+        } else if (values == 3) {
+          bird = "Square_Tailed_Drongo";
+          data_json.push([bird, timestamps, values]);
+        } else if (values == 4) {
+          bird = "Asian_Koel";
+          data_json.push([bird, timestamps, values]);
+        } else if (values == 5) {
+          bird = "Greater_Coucal";
+          data_json.push([bird, timestamps, values]);
+        } else if (values == 6) {
+          bird = "House_Crow";
+          data_json.push([bird, timestamps, values]);
+        } else if (values == 7) {
+          bird = "Purple-rumped_Sunbird";
+          data_json.push([bird, timestamps, values]);
+        } else if (values == 8) {
+          bird = "Red-whiskered_Bulbul";
+          data_json.push([bird, timestamps, values]);
+        }
 
-}
+        // db.ref("/log/").push().set({'bird':bird})
+        ph.innerHTML = ph.innerHTML + "<br> " + "> " + bird + " " + timestamps;
+        // data_json.push([bird,timestamps])
 
-function download(){
-  console.log(data_json)
-downloadTextFile(JSON.stringify(data_json), 'myObj.json')
+        // let a = [];
+        // // Convert raw data bytes to hex values just for the sake of showing something.
+        // // In the "real" world, you'd use data.getUint8, data.getUint16 or even
+        // // TextDecoder to process raw data bytes.
+        // for (let i = 0; i < value.byteLength; i++) {
+        //   a.push('0x' + ('00' + value.getUint8(i).toString(16)).slice(-2));
+        // }
 
-}
+        //   ph.innerHTML = ph.innerHTML + '<br> '+ '> ' + a.join(' ')
+      }
 
-function downloadTextFile(text, name) {
-  const a = document.createElement('a');
-  const type = name.split(".").pop();
-  a.href = URL.createObjectURL( new Blob([text], { type:`text/${type === "txt" ? "plain" : type}` }) );
-  a.download = name;
-  a.click();
-}
-  </script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
-</body>
+      function download() {
+        console.log(data_json);
+        downloadTextFile(JSON.stringify(data_json), "myObj.json");
+      }
+
+      function downloadTextFile(text, name) {
+        const a = document.createElement("a");
+        const type = name.split(".").pop();
+        a.href = URL.createObjectURL(
+          new Blob([text], { type: `text/${type === "txt" ? "plain" : type}` })
+        );
+        a.download = name;
+        a.click();
+      }
+    </script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+      crossorigin="anonymous"
+    ></script>
+  </body>
 </html>
