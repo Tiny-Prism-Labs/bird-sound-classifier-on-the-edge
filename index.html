@@ -140,7 +140,7 @@
   timestamps = new Date().toLocaleString();
   let bird = ""
   if(values== 0){
-    bird = "Asian_Koel"
+    bird = "_noise"
     data_json.push([bird,timestamps])
   }
   else if(values == 1){
@@ -156,27 +156,27 @@
     data_json.push([bird,timestamps])
   }
   else if(values==4){
-    bird="_noise"
+    bird="Asian_Koel"
+    data_json.push([bird,timestamps])
+  }
+  else if(values==5){
+    bird="Greater_Coucal"
+    data_json.push([bird,timestamps])
+  }
+  else if(values==6){
+    bird="House_Crow"
+    data_json.push([bird,timestamps])
+  }
+  else if(values==7){
+    bird="Purple-rumped_Sunbird"
+    data_json.push([bird,timestamps])
+  }
+  else if(values==8){
+    bird="Red-whiskered_Bulbul"
     data_json.push([bird,timestamps])
   }
 
 
-
-  // if(values== 0){
-  
-  //   bird = "Mahesh"
-  //   data_json.push([bird,timestamps])
-  // }
-  // else if(values == 1){
-  //   bird = "Supriya"
-  //   data_json.push([bird,timestamps])
-  // }
-  // else if(values==2){
-  //   bird="Ajith"
-  //   data_json.push([bird,timestamps])
-  // }
- 
-  // let data={'bird':bird}
   // db.ref("/log/").push().set({'bird':bird})
   ph.innerHTML = ph.innerHTML + '<br> '+ '> ' + bird +' '+timestamps;
   // data_json.push([bird,timestamps])
