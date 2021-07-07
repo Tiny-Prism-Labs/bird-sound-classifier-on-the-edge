@@ -1,5 +1,8 @@
 # Bird sound classifier on the edge
 
+## Arduino Nano 33 BLE Library
+[Bird sound classifier](https://github.com/DocMonster7/bird-sound-classifier-on-the-edge/releases) library,select version which is most relevant to you. BLE logging can be tested [https://docmonster7.github.io/bird-sound-classifier-on-the-edge/](https://docmonster7.github.io/bird-sound-classifier-on-the-edge/)
+
 ## Background
 
   There are around 18000 bird species that have been identified across the globe and in India alone, there are over 15000 known bird lovers. This provides a large enough base to collect data as well as provide services to.
@@ -141,10 +144,9 @@ The [Bird sound classifier][3] is available as a public project on Edge-impulse 
 [1]: https://docs.edgeimpulse.com/docs/arduino-nano-33-ble-sense
 [2]: https://www.xeno-canto.org/
 [3]: https://studio.edgeimpulse.com/public/32096/latest
-[ajith]: https://dev.to/ajithkjajith
-[supriya]: https://dev.to/supriyanickam
-
-[mahesh]: https://google.com
+[ajith]: https://github.com/ajithkjajith
+[supriya]: https://github.com/SupriyaNickam
+[mahesh]: https://github.com/EmbeddedMahesh2810
 
 [ss1]: img/ss1.png
 [ss2]: img/ss2.png
