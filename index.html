@@ -71,14 +71,28 @@
           <strong>Download Logs</strong> 
         </button>
       </div>
+
+      <div class="d-flex justify-content-center pt-4"> 
+        <div class="card scroll">
+          <div class="card-body">
+            <strong>Start BLE</strong> : Starting a connection between Nano33 BLE and this site
+          <br>
+          <strong>Stop BLE</strong> : Will terminate the BLE connection and will no longer recieve any data      
+        <br>
+        <strong>Download Logs</strong> : Creates a json file with all the output displayed 
+        </div>
+        </div>
+      </div>
     </div>
 
     <script>
       var characteristicUuid = "beb5483e-36e1-4688-b7f5-ea07361b26a8";
       var serviceUuid = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
+
       var ph = document.getElementById("placeholder");
       var limit = 0;
-      var data_json = [];
+      var data_json = {};
+      
       function isWebBluetoothEnabled() {
         if (!navigator.bluetooth) {
           console.log("Web Bluetooth API is not available in this browser!");
@@ -90,9 +104,7 @@
 
       function getDeviceInfo() {
         let options = {
-          // acceptAllDevices: true // Option to accept all devices
           filters: [
-            //   { "name": deviceName }
             { services: [serviceUuid] },
           ],
         };
@@ -112,17 +124,16 @@
         navigator.bluetooth
           .requestDevice({ filters: [{ services: [serviceUuid] }] })
           .then((device) => {
-            // console.log('Connecting to GATT Server...');
             ph.innerHTML = "Connecting to GATT Server...";
             return device.gatt.connect();
           })
           .then((server) => {
-            // console.log('Getting Service...');
+
             ph.innerHTML = ph.innerHTML + "<br> Getting Service...";
             return server.getPrimaryService(serviceUuid);
           })
           .then((service) => {
-            // console.log('Getting Characteristic...');
+
             ph.innerHTML = ph.innerHTML + "<br> Getting Characteristic...";
             return service.getCharacteristic(characteristicUuid);
           })
@@ -147,7 +158,6 @@
           myCharacteristic
             .stopNotifications()
             .then((_) => {
-              // log('> Notifications stopped');
               ph.innerHTML = ph.innerHTML + "<br> > Notifications stopped";
               myCharacteristic.removeEventListener(
                 "characteristicvaluechanged",
@@ -181,48 +191,36 @@
           data_json.push([bird, timestamps]);
         } else if (values == 1) {
           bird = "Laughing_Kookaburra";
-          data_json.push([bird, timestamps, values]);
+          data_json.push([bird, timestamps]);
         } else if (values == 2) {
           bird = "Rose-ringed_Parakeet";
-          data_json.push([bird, timestamps, values]);
+          data_json.push([bird, timestamps]);
         } else if (values == 3) {
           bird = "Square_Tailed_Drongo";
-          data_json.push([bird, timestamps, values]);
+          data_json.push([bird, timestamps]);
         } else if (values == 4) {
           bird = "Asian_Koel";
-          data_json.push([bird, timestamps, values]);
+          data_json.push([bird, timestamps]);
         } else if (values == 5) {
           bird = "Greater_Coucal";
-          data_json.push([bird, timestamps, values]);
+          data_json.push([bird, timestamps]);
         } else if (values == 6) {
           bird = "House_Crow";
-          data_json.push([bird, timestamps, values]);
+          data_json.push([bird, timestamps]);
         } else if (values == 7) {
           bird = "Purple-rumped_Sunbird";
-          data_json.push([bird, timestamps, values]);
+          data_json.push([bird, timestamps]);
         } else if (values == 8) {
           bird = "Red-whiskered_Bulbul";
-          data_json.push([bird, timestamps, values]);
+          data_json.push([bird, timestamps]);
         }
 
-        // db.ref("/log/").push().set({'bird':bird})
         ph.innerHTML = ph.innerHTML + "<br> " + "> " + bird + " " + timestamps;
-        // data_json.push([bird,timestamps])
-
-        // let a = [];
-        // // Convert raw data bytes to hex values just for the sake of showing something.
-        // // In the "real" world, you'd use data.getUint8, data.getUint16 or even
-        // // TextDecoder to process raw data bytes.
-        // for (let i = 0; i < value.byteLength; i++) {
-        //   a.push('0x' + ('00' + value.getUint8(i).toString(16)).slice(-2));
-        // }
-
-        //   ph.innerHTML = ph.innerHTML + '<br> '+ '> ' + a.join(' ')
       }
 
       function download() {
         console.log(data_json);
-        downloadTextFile(JSON.stringify(data_json), "myObj.json");
+        downloadTextFile(JSON.stringify(data_json), "bird_log.json");
       }
 
       function downloadTextFile(text, name) {
