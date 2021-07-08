@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bird sound classifier</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
+      crossorigin="anonymous"
+    />
+    <style></style>
+  </head>
+  <body>
+    <div class="container">
+      <h1 id="bird-sound-classifier-on-the-edge">
+        Bird sound classifier on the edge
+      </h1>
+      <br>
+      <br>
+      <strong>Note:</strong> This is an auto-generated website from
+      <a
+        href="https://github.com/DocMonster7/bird-sound-classifier-on-the-edge/"
+        >Bird sound classifier</a
+      >
+      repo README.md
+      <br>
+      <br>
+      <h2 id="arduino-nano-33-ble-library">Arduino Nano 33 BLE Library</h2>
+      <p>
+        <a
+          href="https://github.com/DocMonster7/bird-sound-classifier-on-the-edge/releases"
+          >Bird sound classifier</a
+        >
+        library,select version which is most relevant to you.
+      </p>
+      <p>
+        BLE logging can be tested
+        <a
+          href="https://docmonster7.github.io/bird-sound-classifier-on-the-edge/"
+          >bird-sound-classifier-on-the-edge</a
+        >.
+      </p>
+      <p>
+        This library is only compiled and tested on
+        <strong>Arduino Nano 33 BLE Sense</strong>.
+      </p>
+      <h2 id="edge-impulse-public-project">Edge Impulse Public Project</h2>
+      <p>
+        <strong>Note:</strong> Each project apart from birds has an another
+        label <code>_noise</code>
+      </p>
+      <ul>
+        <li>
+          <a href="https://studio.edgeimpulse.com/public/38607/latest"
+            >Bird sound classifier v1.0.1-alpha</a
+          >
+          is the version with 6 birds but the accuracy is 88%.We are working on
+          improving it by processing the training set even more.
+        </li>
+        <li>
+          <a href="https://studio.edgeimpulse.com/public/32096/latest"
+            >Bird sound classifier</a
+          >
+          is the version with 4 birds and with an accuracy of 94%.Reccomended
+          for new users who want to try out edge impulse and this project.
+        </li>
+      </ul>
+      <p>
+        Check the
+        <a
+          href="https://github.com/DocMonster7/bird-sound-classifier-on-the-edge/releases"
+          >releases</a
+        >
+        section to see the more details about the birds that are used in each
+        project
+      </p>
+      <h2 id="background">Background</h2>
+      <p>
+        There are around 18000 bird species that have been identified across the
+        globe and in India alone, there are over 15000 known bird lovers. This
+        provides a large enough base to collect data as well as provide services
+        to.
+      </p>
+      <p>
+        The project attempts to recognize different bird calls by continuously
+        listening to the audio through the on board mic of the nano33 BLE Sense.
+        The bird call heard will be consumed by the model to classify it as one
+        amongst the trained birds.
+      </p>
+      <p>
+        If no bird calls are heard, then the audio would be classified as
+        background noise since we have included the background noise also during
+        training. This project can be helpful for people who are interested in
+        birding and would like to understand the habitat or patterns of the bird
+        calls.
+      </p>
+      <h2 id="overview">Overview</h2>
+      <ul>
+        <li><p>Interfacing Arduino Nano 33 BLE Sense with Edge Impulse</p></li>
+        <li><p>Building a machine learning model</p></li>
+        <li><p>Deploying the model to the device</p></li>
+      </ul>
+      <h2 id="interfacing-arduino-nano-33-ble-sense-with-edge-impulse">
+        Interfacing Arduino Nano 33 BLE Sense with Edge Impulse
+      </h2>
+      <p>
+        Edge Impulse fully supports the Arduino Nano 33 BLE Sense, a compact
+        development board containing a Cortex-M4 microprocessor, motion sensors,
+        a microphone, and BLE. The studio supports sampling of raw data,
+        development of models, and deploying trained machine learning models. It
+        costs roughly $30 and is available from Arduino and a variety of
+        distributors.
+      </p>
+      <p>
+        This can easily achived by installing all the dependencies on your
+        system from
+        <a href="https://docs.edgeimpulse.com/docs/arduino-nano-33-ble-sense"
+          >Edge Impulse docs</a
+        >.
+      </p>
+      <p>
+        Once you have configured flashed the Nano 33 BLE sense with edge-impulse
+        framework we can continue with next step.
+      </p>
+      <h2 id="building-a-machine-learning-model">
+        Building a machine learning model
+      </h2>
+      <p>
+        we require a lot of bird data and it is impractical to find data that is
+        high in quantity as well as quality, we took data for specific birds
+        from <a href="https://www.xeno-canto.org/">Xeno-Canto</a>, which is a
+        large database dedicated to sharing bird sounds from all over the world.
+      </p>
+      <p>We picked 4 birds that are commonly found in our area.</p>
+      <ul>
+        <li><p>Asian Koel</p></li>
+        <li><p>Laughing Kookaburra</p></li>
+        <li><p>Square Tailed Drongo</p></li>
+        <li><p>Rose-ringed Parakeet</p></li>
+      </ul>
+      <table>
+        <thead>
+          <tr>
+            <th style="text-align: center">
+              <img
+                src="img/Square-tailed_Drongo_(Dicrurus_ludwigii).jpg"
+                alt="Square Tailed Drongo"
+              />
+            </th>
+            <th style="text-align: center">
+              <img
+                src="img/Laughing_kookaburra_dec08_02.jpg"
+                alt="Laughing Kookaburra"
+              />
+            </th>
+            <th style="text-align: center">
+              <img src="img/Asian_koel.jpg" alt="Asian Koel" />
+            </th>
+            <th style="text-align: center">
+              <img
+                src="img/Rose-ringed_parakeet_(Psittacula_krameri_borealis)_male_Jaipur_2.jpg"
+                alt="Rose-ringed Parakeet"
+              />
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="text-align: center">Square Tailed Drongo</td>
+            <td style="text-align: center">Laughing Kookaburra</td>
+            <td style="text-align: center">Asian Koel</td>
+            <td style="text-align: center">Rose-ringed Parakeet</td>
+          </tr>
+        </tbody>
+      </table>
+      <h3 id="building-a-dataset">Building a Dataset</h3>
+      <p>
+        We downloaded around 20-25 audio files for each bird and worked on
+        preprocessing using a software called Audacity. And then proceeded to
+        augment the data, while infusing noise. And this helped us generate 200
+        files of 10 seconds each for all four of the above mentioned labels as
+        well as a label for noise alone.
+      </p>
+      <p>
+        We now have a balanced dataset with 33 minutes and 20 seconds of data
+        for each label in training and 8 minutes and 20 seconds of test data.
+      </p>
+      <p><img class="img-fluid" src="img/ss1.png" alt="Data Set" /></p>
+      <h3 id="designing-an-impulse">Designing an Impulse</h3>
+      <p>
+        You can create an impulse once the training is in place. An impulse
+        takes raw data, cuts it into smaller windows, extracts features with
+        signal processing blocks, and then classifies new data with a learning
+        block. Signal processing blocks are used to make raw data easy to
+        process by returning the same values for the same input, whereas
+        learning blocks learn from previous experiences.
+      </p>
+      <p>After some experimenting, we settled with the following parameters:</p>
+      <ul>
+        <li>Window Size = 2500 ms</li>
+        <li>Window Increase = 1250 ms</li>
+      </ul>
+      <p>
+        We can build windows that overlap by setting a Window increase that is
+        smaller than the Window size. Each overlapping window is a unique
+        example of audio that conveys the sample&#39;s label, despite the fact
+        that they may contain comparable data. We may make the most of the
+        training data by employing overlapping windows.
+      </p>
+      <p>Now, onto selecting blocks:</p>
+      <ul>
+        <li>Processing Block - Audio (MFE)</li>
+        <li>Learning Block - Neural Network (Keras)</li>
+      </ul>
+      <p><img class="img-fluid" src="img/ss2.png" alt="Block selection" /></p>
+      <h3 id="configuring-the-mfe-block">Configuring the MFE Block</h3>
+      <p>
+        After exploring a few variations for the parameters of Mel-filterbank
+        energy features, we determined that the default values were the best.
+      </p>
+      <p><img class="img-fluid" src="img/ss3.png" alt="MFE Block" /></p>
+      <h3 id="configuring-the-neural-network-model">
+        Configuring the Neural Network Model
+      </h3>
+      <p>
+        The default values of the Neural Network model in the Edge Impulse
+        studio gave the best results.
+      </p>
+      <p><img src="img/ss4.png" class="img-fluid" alt="NN Model" /></p>
+      <h3 id="classifying-new-data">Classifying New Data</h3>
+      <p>
+        To ensure that the model works as well on new and previously unseen data
+        as it has for the training data, we can use the option of ‘Live
+        classification’ provided by the studio.
+      </p>
+      <p>
+        Click on Live classification in the left hand menu. Your device should
+        show up in the &#39;Classify new data&#39; panel. Capture 5 seconds of
+        background noise by clicking Start sampling.
+      </p>
+      <p>
+        We performed live classification of data using both our smartphones as
+        well as the Arduino Nano 33 BLE Sense.
+      </p>
+      <h3 id="model-testing">Model Testing</h3>
+      <p>
+        Every Edge Impulse project has a test dataset in addition to its
+        training data. The test dataset is immediately saved with the samples
+        taken in Live classification, and the Model testing page displays all of
+        the test data.
+      </p>
+      <p>
+        To use the sample that was captured for testing, the expected outcome
+        should be edited accordingly. Click the ⋮ icon and select Edit expected
+        outcome, then enter the relevant label, as shown below.
+      </p>
+      <p><img src="img/ss5.png" class="img-fluid" alt="Model Testing" /></p>
+      <p>
+        Now, select the sample using the checkbox to the left of the table and
+        click Classify selected.
+      </p>
+      <p>
+        We can observe that the model&#39;s accuracy has been rated based on the
+        test data.
+      </p>
+      <h3 id="model-troubleshooting">Model troubleshooting</h3>
+      <p>
+        As expected, the performance of the model isn’t always great in the
+        first attempt, which can be so due to several factors. Some of the
+        modifications that can help improving the accuracy of the model are:
+      </p>
+      <ul>
+        <li>Scouring the dataset for anomalies/low quality data.</li>
+        <li>Change in parameters such as Window Size and Window Increase.</li>
+        <li>
+          Change in parameters of the learning and processing blocks. Or change
+          the blocks if there is a more suitable one. (Example, switch between
+          MFCC and MFE).
+        </li>
+        <li>Change in sample time.</li>
+        <li>Adjustments in the number of epochs.</li>
+      </ul>
+      <h2 id="deploying-the-model-to-the-device">
+        Deploying the model to the device
+      </h2>
+      <ul>
+        <li>Edge Impulse project&gt; Deployment.</li>
+        <li>
+          Create the full library which contains the impulse and all external
+          required libraries. Select Arduino library and click Build to create
+          the library
+        </li>
+      </ul>
+      <p><img src="img/ss6.png" class="img-fluid" alt="Deploy" /></p>
+      <ul>
+        <li>Download and extract the .zip file.</li>
+        <li>
+          Open the Arduino IDE &gt; Choose Sketch &gt; Include Library &gt; Add
+          .ZIP library.
+        </li>
+        <li>
+          Find the folder (do not go inside the folder), and select Choose.
+        </li>
+        <li>
+          Then, load an example by going to File &gt; Examples &gt; Project name
+          - Edge Impulse &gt; static_buffer.
+        </li>
+      </ul>
+      <p>The example application will now load the impulse.</p>
+      <table>
+        <thead>
+          <tr>
+            <th style="text-align: center">
+              <img src="img/ss8.png" class="img-fluid" alt="Serial Monitor" />
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="text-align: center">
+              This will run the signal processing pipeline, and then classify
+              the output
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <h2 id="our-team">Our Team</h2>
+      <ul>
+        <li><a href="https://github.com/ajithkjajith">Ajith</a></li>
+        <li><a href="https://github.com/SupriyaNickam">Supriya</a></li>
+        <li><a href="https://github.com/EmbeddedMahesh2810">Mahesh</a></li>
+      </ul>
+    </div>
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+      crossorigin="anonymous"
+    ></script>
+  </body>
+</html>
