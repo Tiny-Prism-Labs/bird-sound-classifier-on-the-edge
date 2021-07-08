@@ -1,7 +1,21 @@
 # Bird sound classifier on the edge
 
 ## Arduino Nano 33 BLE Library
-[Bird sound classifier](https://github.com/DocMonster7/bird-sound-classifier-on-the-edge/releases) library,select version which is most relevant to you. BLE logging can be tested [https://docmonster7.github.io/bird-sound-classifier-on-the-edge/](https://docmonster7.github.io/bird-sound-classifier-on-the-edge/)
+
+[Bird sound classifier](https://github.com/DocMonster7/bird-sound-classifier-on-the-edge/releases) library,select version which is most relevant to you.
+
+BLE logging can be tested [bird-sound-classifier-on-the-edge](https://docmonster7.github.io/bird-sound-classifier-on-the-edge/).
+
+This library is only compiled and tested on **Arduino Nano 33 BLE Sense**.
+
+## Edge Impulse Public Project
+
+**Note:** Each project apart from birds has an another label ```_noise```
+
+* [Bird sound classifier v1.0.1-alpha][4] is the version with 6 birds but the accuracy is 88%.We are working on improving it by processing the training set even more.
+* [Bird sound classifier][3] is the version with 4 birds and with an accuracy of 94%.Reccomended for new users who want to try out edge impulse and this project.
+
+Check the [releases][5] section to see the more details about the birds that are used in each project
 
 ## Background
 
@@ -131,10 +145,6 @@ The example application will now load the impulse.
 |:--:|
 | This will run the signal processing pipeline, and then classify the output|
 
-## Edge Impulse Public Project
-
-The [Bird sound classifier][3] is available as a public project on Edge-impulse with all the data set and model. You can test it out for yourself.
-
 ## Our Team
 
 * [Ajith][ajith]
@@ -144,6 +154,9 @@ The [Bird sound classifier][3] is available as a public project on Edge-impulse 
 [1]: https://docs.edgeimpulse.com/docs/arduino-nano-33-ble-sense
 [2]: https://www.xeno-canto.org/
 [3]: https://studio.edgeimpulse.com/public/32096/latest
+[4]: https://studio.edgeimpulse.com/public/38607/latest
+[5]: https://github.com/DocMonster7/bird-sound-classifier-on-the-edge/releases
+
 [ajith]: https://github.com/ajithkjajith
 [supriya]: https://github.com/SupriyaNickam
 [mahesh]: https://github.com/EmbeddedMahesh2810
