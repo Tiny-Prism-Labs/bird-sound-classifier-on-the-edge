@@ -12,6 +12,7 @@ This library is only compiled and tested on **Arduino Nano 33 BLE Sense**.
 
 **Note:** Each project apart from birds has an another label ```_noise```
 
+* [Bird sound classifier v1.1][6] is the version with 5 birds that are local to Mangalore. The accuracy is 94% compared to the v1.0.1-alpha. But we had to eliminated one bird ```Red-whiskered_Bulbul``` which has multiple calls and the overall accuracy of the model decreased.
 * [Bird sound classifier v1.0.1-alpha][4] is the version with 6 birds but the accuracy is 88%.We are working on improving it by processing the training set even more.
 * [Bird sound classifier][3] is the version with 4 birds and with an accuracy of 94%.Reccomended for new users who want to try out edge impulse and this project.
 
@@ -156,6 +157,8 @@ The example application will now load the impulse.
 [3]: https://studio.edgeimpulse.com/public/32096/latest
 [4]: https://studio.edgeimpulse.com/public/38607/latest
 [5]: https://github.com/DocMonster7/bird-sound-classifier-on-the-edge/releases
+[6]: https://studio.edgeimpulse.com/public/39527/latest
+
 
 [ajith]: https://github.com/ajithkjajith
 [supriya]: https://github.com/SupriyaNickam
