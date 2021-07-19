@@ -301,7 +301,7 @@
           temp_char
             .stopNotifications()
             .then((_) => {
-              ph.innerHTML = ph.innerHTML + "<br> <strong>Temp Notifications stopped</strong>";
+              // ph.innerHTML = ph.innerHTML + "<br> <strong>Temp Notifications stopped</strong>";
               temp_char.removeEventListener(
                 "characteristicvaluechanged",
                 logvalues
@@ -316,7 +316,7 @@
           hum_char
             .stopNotifications()
             .then((_) => {
-              ph.innerHTML = ph.innerHTML + "<br> <strong>Humidity Notifications stopped</strong>";
+              // ph.innerHTML = ph.innerHTML + "<br> <strong>Humidity Notifications stopped</strong>";
               hum_char.removeEventListener(
                 "characteristicvaluechanged",
                 logvalues
@@ -331,7 +331,7 @@
           press_char
             .stopNotifications()
             .then((_) => {
-              ph.innerHTML = ph.innerHTML + "<br> <strong>Pressure Notifications stopped</strong>";
+              // ph.innerHTML = ph.innerHTML + "<br> <strong>Pressure Notifications stopped</strong>";
               press_char.removeEventListener(
                 "characteristicvaluechanged",
                 logvalues
