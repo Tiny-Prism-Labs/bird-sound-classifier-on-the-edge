@@ -1,4 +1,5 @@
-# Bird sound classifier on the edge
+[![Bird sound classifier 🐦 , Nature's maestro on the edge ](https://pimp-my-readme.webapp.io/pimp-my-readme/wavy-banner?subtitle=Nature%27s%20maestro%20on%20the%20edge%20&title=Bird%20sound%20classifier%20%F0%9F%90%A6%20)](https://pimp-my-readme.webapp.io)
+[![JavaScript_BLE_Edge Impulse _Tensorflow Lite](https://pimp-my-readme.webapp.io/pimp-my-readme/technology?technology=JavaScript_BLE_Edge%20Impulse%20_Tensorflow%20Lite)](https://pimp-my-readme.webapp.io)
 
 ## Arduino Nano 33 BLE Library
 
