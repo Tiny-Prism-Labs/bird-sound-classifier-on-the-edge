@@ -44,9 +44,7 @@
         <div class="d-flex justify-content-center pt-3">
             <h2>Bird sound classifier over BLE</h2>
         </div>
-          <div>
-            <a href="fan_ble.html">Fan detect</a>
-          </div>
+
         <br />
         <div class="d-flex justify-content-center">
             <div class="pe-5">
@@ -364,34 +362,41 @@
         timestamps = new Date().toLocaleString();
         time = new Date().toLocaleTimeString();
         let bird = "";
-        if (values == 0) {
-          bird = "Noise";
-          data_json.push({'bird':bird, 'time':timestamps});
-        } else if (values == 1) {
-          bird = "Laughing Kookaburra";
-          data_json.push({'bird':bird, 'time':timestamps});
-        } else if (values == 2) {
-          bird = "Rose-ringed Parakeet";
-          data_json.push({'bird':bird, 'time':timestamps});
-        } else if (values == 3) {
-          bird = "Square Tailed Drongo";
-          data_json.push({'bird':bird, 'time':timestamps});
-        } else if (values == 4) {
-          bird = "Asian Koel";
-          data_json.push({'bird':bird, 'time':timestamps});
-        } else if (values == 5) {
-          bird = "Greater Coucal";
-          data_json.push({'bird':bird, 'time':timestamps});
-        } else if (values == 6) {
-          bird = "House Crow";
-          data_json.push({'bird':bird, 'time':timestamps});
-        } else if (values == 7) {
-          bird = "Purple-rumped Sunbird";
-          data_json.push({'bird':bird, 'time':timestamps});
-        } else if (values == 8) {
-          bird = "Red-whiskered Bulbul";
-          data_json.push({'bird':bird, 'time':timestamps});
+        if(values == 0){
+            bird="Fan Running Normally"
+        }else if(values==1){
+            bird="External Vibrations"
+        }else if(values==2){
+            bird = "Fan is OFF"
         }
+        // if (values == 0) {
+        //   bird = "Noise";
+        //   data_json.push({'bird':bird, 'time':timestamps});
+        // } else if (values == 1) {
+        //   bird = "Laughing Kookaburra";
+        //   data_json.push({'bird':bird, 'time':timestamps});
+        // } else if (values == 2) {
+        //   bird = "Rose-ringed Parakeet";
+        //   data_json.push({'bird':bird, 'time':timestamps});
+        // } else if (values == 3) {
+        //   bird = "Square Tailed Drongo";
+        //   data_json.push({'bird':bird, 'time':timestamps});
+        // } else if (values == 4) {
+        //   bird = "Asian Koel";
+        //   data_json.push({'bird':bird, 'time':timestamps});
+        // } else if (values == 5) {
+        //   bird = "Greater Coucal";
+        //   data_json.push({'bird':bird, 'time':timestamps});
+        // } else if (values == 6) {
+        //   bird = "House Crow";
+        //   data_json.push({'bird':bird, 'time':timestamps});
+        // } else if (values == 7) {
+        //   bird = "Purple-rumped Sunbird";
+        //   data_json.push({'bird':bird, 'time':timestamps});
+        // } else if (values == 8) {
+        //   bird = "Red-whiskered Bulbul";
+        //   data_json.push({'bird':bird, 'time':timestamps});
+        // }
 
         ph.innerHTML = ph.innerHTML + "<br> " + "-> " + time + " : " + bird;
       }
