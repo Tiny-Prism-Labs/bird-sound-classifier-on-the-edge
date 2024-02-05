@@ -1,617 +1,682 @@
 <!DOCTYPE html>
 <html>
-<head>
+ <head>
   <title>Web BLE Activity Tracking</title>
-  <link href="https://fonts.googleapis.com/css?family=Roboto&display=swap" rel="stylesheet">
+  <link
+   href="https://fonts.googleapis.com/css?family=Roboto&display=swap"
+   rel="stylesheet"
+  />
   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@jaames/iro/dist/iro.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/109/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/json-to-csv-export"></script>
+
   <!-- <script src="GLTFLoader.js"></script> -->
   <style>
+   body {
+    font-family: "Roboto", sans-serif;
+    color: #fff5f5;
+    background: #000000;
+    font-size: small;
+   }
 
-  body {
-    font-family: 'Roboto', sans-serif; color: #888888; background: #000000; font-size: small;
-  }
+   #bigButton {
+    background-color: aqua;
+    border: none;
+    color: black;
+    padding: 1px;
+    text-align: center;
+    text-decoration: none;
+    font-size: 6px;
+    margin: 12px 20px;
+    height: 15px;
+    width: 30px;
+    border-radius: 10%;
+    outline: none;
+    font-family: "Roboto", sans-serif;
+   }
 
-  #bigButton {
-    background-color: aqua; border: none; color: black; padding: 1px; text-align: center;
-    text-decoration: none; font-size: 6px; margin: 12px 20px; height: 15px; width: 30px;
-    border-radius: 10%; outline:none; font-family: 'Roboto', sans-serif;
-  }
+   .container {
+    width: 960px;
+    height: 384px;
+    margin-top: 30px;
+    margin-bottom: 7.5px;
+    margin: 0 auto;
+   }
 
-  .container {
-    width:960px;height:384px;margin-top:30px;margin-bottom:7.5px;  margin: 0 auto;
-  }
-
-  .widget {
+   .widget {
     background: #111111;
     border: 1px solid #000000;
     border-radius: 0px;
     padding: 12px;
     margin: 6px;
     float: left;
-  }
+   }
 
-  .status {
+   .status {
     background-image: url("logo.png");
     background-size: 80px;
     background-position: 98% 50%;
     background-repeat: no-repeat;
-    width: 885px;  height: 42px;
+    width: 885px;
+    height: 42px;
     color: white;
-  }
+   }
 
-  .square {
-    width: 192px;  height: 192px;
+   .square {
+    width: 192px;
+    height: 192px;
     position: relative;
-  }
+   }
 
-  .label {
+   .label {
     height: 15px;
     display: inline;
     font-size: 15px;
-  }
+   }
 
-  .digit {
+   .digit {
     font-size: 30px;
     color: #888888;
     float: right;
-  }
+   }
 
-  .short {width: 192px;  height: 96px;}
-  .double {width: 900px;  height: 225px;}
-  .graph{width: 192px;  height: 177px;}
-  .doublegraph{width: 900px;  height: 225px;}
-  .shortgraph{width: 192px;  height: 81px;}
+   .short {
+    width: 192px;
+    height: 96px;
+   }
+   .double {
+    width: 900px;
+    height: 225px;
+   }
+   .graph {
+    width: 192px;
+    height: 177px;
+   }
+   .doublegraph {
+    width: 900px;
+    height: 225px;
+   }
+   .shortgraph {
+    width: 192px;
+    height: 81px;
+   }
 
-  #color-picker-container {
+   #color-picker-container {
     display: flex;
     align-items: center;
     justify-content: center;
-  }
+   }
+
+   .start {
+    background-color: #021bd6;
+    color: white;
+    font-size: medium;
+    height: 30px;
+    width: 150px;
+    position: relative;
+    margin: 10px;
+   }
+   .center {
+    justify-content: center;
+    display: flex;
+    align-items: center;
+   }
+   .download {
+    background-color: #03be22;
+    color: white;
+    font-size: medium;
+    height: 30px;
+    width: 150px;
+    position: relative;
+    margin: 10px;
+   }
+   .stop {
+    background-color: #e20909;
+    color: white;
+    font-size: medium;
+    height: 30px;
+    width: 150px;
+    position: relative;
+    margin: 10px;
+   }
+   .stopwatch {
+    font-size: xx-large;
+    position: relative;
+   }
+
+   transition {
+    -webkit-transition: all 0.5s ease-in-out;
+    -moz-transition: all 0.5s ease-in-out;
+    transition: all 0.5s ease-in-out;
+   }
+
+   #seconds,
+   #tens {
+    font-size: 2em;
+   }
   </style>
-</head>
-<body>
-
+ </head>
+ <body>
   <div class="container">
-    <!-- <div class="label">&nbsp;&nbsp;IMPORTANT - first upload <a href="https://create.arduino.cc/editor/dpajak/e4128780-d76d-438f-97a4-541740cb0473/preview">sketch</a> to Arduino Nano 33 BLE Sense board<br></div> -->
-    <div class="status widget">
-      <button id="bigButton"></button>
-      <div class="label" id="bluetooth">Click button to connect to the board</div>
-    </div>
+   <!-- <div class="label">&nbsp;&nbsp;IMPORTANT - first upload <a href="https://create.arduino.cc/editor/dpajak/e4128780-d76d-438f-97a4-541740cb0473/preview">sketch</a> to Arduino Nano 33 BLE Sense board<br></div> -->
+   <div class="status widget">
+    <button id="bigButton"></button>
+    <div class="label" id="bluetooth">Click button to connect to the board</div>
+   </div>
 
-    <!-- <div class="square widget" id="3d">
+   <!-- <div class="square widget" id="3d">
       <div class="label">&#128230;3D</div>
     </div> -->
 
-    <div class="double widget">
-      <div class="label">&#128640; Accelerometer</div>
-      <div id="accelerometer" class="doublegraph"></div>
+   <div class="double widget">
+    <div class="label">&#128640; Accelerometer</div>
+    <div id="accelerometer" class="doublegraph"></div>
+   </div>
+
+   <div class="double widget">
+    <div class="label">&#128171; Gyroscope</div>
+    <div id="gyroscope" class="doublegraph"></div>
+   </div>
+
+   <!-- <div class=" graph center">
+    <h2>Stopwatch</h2>
+   </div> -->
+
+   <div class="doublegraph center">
+    <div>
+     <h2>Stopwatch</h2>
     </div>
-
-
-
-    <div class="double widget">
-      <div class="label">&#128171; Gyroscope</div>
-      <div id="gyroscope" class="doublegraph"></div>
+    &nbsp; &nbsp; &nbsp;
+    <div>
+     <p class="stopwatch">
+      <span id="seconds">00</span>:<span id="tens">00</span>
+     </p>
     </div>
-
-    <!-- <div class="square widget">
-      <div class="label">&#128161; RGB LED control</div>
-      <div id="color-picker-container" class="graph"></div>
-    </div> -->
-
-    <!-- <div class="square widget">
-      <div class="label">&#127897;Microphone</div>
-      <div style="position: relative;">
-        <canvas id="mic" class="graph" style="position: absolute; left: 0; top: 0; z-index: 1;"></canvas>
-        <canvas id="micbg" class="graph" style="position: absolute; left: 0; top: 0; z-index: 0;"></canvas>
-      </div>
-    </div> -->
-
-    <!-- <div class="square widget">
-      <div class="label">&#128250;Spectrogram</div>
-      <canvas id="spectrogram" class="graph"></canvas>
-    </div> -->
-
-    <!-- <div class="square widget">
-      <div class="label">&#127912;Colorimeter</div>
-      <canvas id="colors" class="graph"></canvas>
-    </div> -->
-
-    <!-- <div class="short widget">
-      <div class="label">&#127777; Temperature - </div>
-      <div class="label" id="temperature-value"></div>
-      <div class="label">&deg;C</div>
-      <div class="shortgraph" id="temperature"></div>
-    </div> -->
-
-    <!-- <div class="short widget">
-      <div class="label">&#128167; Humidity - </div>
-      <div class="label" id="humidity-value"></div>
-      <div class="label">%</div>
-      <div class="shortgraph" id="humidity"></div>
-
-    </div> -->
-
-    <!-- <div class="short widget">
-      <div class="label">&#9925; Pressure - </div>
-      <div class="label" id="pressure-value"></div>
-      <div class="label">kPa</div>
-      <div class="shortgraph" id="pressure"></div>
-    </div> -->
-
-    <!-- <div class="short widget">
-      <div class="label">&#128073; Proximity - </div>
-      <div class="label" id="proximity-value"></div>
-      <div class="shortgraph" id="proximity"></div>
-    </div> -->
-
+   </div>
+   <div class="doublegraph center">
+    <!-- <input class="label" type="text"> -->
+    <button class="start" onclick="start_recording()">Start Recording</button>
+    <button class="stop" onclick="stop_recording()">Stop Recording</button>
+    <button class="download" onclick="download()">Download</button>
+   </div>
   </div>
-</body>
-<script type="text/javascript">
-/*
+ </body>
+ <script type="text/javascript">
+  /*
 Demo showing simple dashboard of Arduino BLE sense
 
 Based on: https://developers.google.com/web/updates/2015/07/interact-with-ble-devices-on-the-web
 For earlier versions of Windows and Linux, you still have to go to chrome://flags/#enable-experimental-web-platform-features,
 enable the highlighted flag, and restart Chrome for now.
 */
+  //   import csvDownload from "json-to-csv-export";
 
+  var seconds = 0;
+  var tens = 0;
+  var appendTens = document.getElementById("tens");
+  var appendSeconds = document.getElementById("seconds");
+  var buttonStart = document.getElementById("button-start");
+  var buttonStop = document.getElementById("button-stop");
+  var buttonReset = document.getElementById("button-reset");
+  var Interval;
 
+  var maxRecords = 64;
 
-var maxRecords = 64;
+  var BLEsense = {
+   accelerometer: {
+    uuid: "6fbe1da7-3001-44de-92c4-bb6e04fb0212",
+    properties: ["BLENotify"],
+    structure: ["Float32", "Float32", "Float32"],
+    data: { Ax: [], Ay: [], Az: [] },
+   },
+   gyroscope: {
+    uuid: "6fbe1da7-3002-44de-92c4-bb6e04fb0212",
+    properties: ["BLENotify"],
+    structure: ["Float32", "Float32", "Float32"],
+    data: { Gx: [], Gy: [], Gz: [] },
+   },
+  };
 
-var BLEsense =
-{
-  accelerometer:
-  {
-    uuid: '6fbe1da7-3001-44de-92c4-bb6e04fb0212',
-    properties: ['BLENotify'],
-    structure: ['Float32','Float32','Float32'],
-    data: {'Ax':[],'Ay':[],'Az':[]},
-  },
-  gyroscope:
-  {
-    uuid: '6fbe1da7-3002-44de-92c4-bb6e04fb0212',
-    properties: ['BLENotify'],
-    structure: ['Float32','Float32','Float32'],
-    data: {'Gx':[],'Gy':[],'Gz':[]},
-  }
-//   magnetometer:
-//   {
-//     uuid: '6fbe1da7-3003-44de-92c4-bb6e04fb0212',
-//     properties: ['BLENotify'],
-//     structure: ['Float32','Float32','Float32'],
-//     data: {'Mx':[],'My':[],'Mz':[]},
-//   },
-//   colorimeter:
-//   {
-//     uuid: '6fbe1da7-2002-44de-92c4-bb6e04fb0212',
-//     properties: ['BLENotify'],
-//     structure: ['Uint16','Uint16','Uint16'],
-//     data: {'R':[], 'G':[], 'B':[]}
-//   },
-//   microphone:
-//   {
-//     uuid: '6fbe1da7-5001-44de-92c4-bb6e04fb0212',
-//     properties: ['BLENotify'],
-//     structure: new Array(32).fill('Uint8'), // an array of 32 'Uint8's
-//     data: {'a0':[],'a1':[],'a2':[],'a3':[],'a4':[],'a5':[],'a6':[],'a7':[],'a8':[],'a9':[],'aA':[],'aB':[],'aC':[],'aD':[],'aE':[],'aF':[],
-//     'b0':[],'b1':[],'b2':[],'b3':[],'b4':[],'b5':[],'b6':[],'b7':[],'b8':[],'b9':[],'bA':[],'bB':[],'bC':[],'bD':[],'bE':[],'bF':[]}
-//   },
-//   led:{
-//     uuid: '6fbe1da7-6001-44de-92c4-bb6e04fb0212',
-//     properties: ['BLEWrite'],
-//     structure: ['Uint8','Uint8','Uint8'],
-//     data: {'R':[], 'G':[], 'B':[]},
-//     writeBusy: false, // we need to track this to avoid 'GATT operation in progress' errors
-//     writeValue: null
-//   },
-//   proximity:{
-//     uuid: '6fbe1da7-2003-44de-92c4-bb6e04fb0212',
-//     properties: ['BLENotify'],
-//     structure: ['Uint8'],
-//     data: {proximity:[]}
-//   },
-//   temperature:{
-//     uuid: '6fbe1da7-4002-44de-92c4-bb6e04fb0212',
-//     properties: ['BLERead'],
-//     structure: ['Float32'],
-//     data: {temperature:[]}
-//   },
-//   humidity:{
-//     uuid: '6fbe1da7-4003-44de-92c4-bb6e04fb0212',
-//     properties: ['BLERead'],
-//     structure: ['Float32'],
-//     data: {humidity:[]}
-//   },
-//   pressure:{
-//     uuid: '6fbe1da7-4001-44de-92c4-bb6e04fb0212',
-//     properties: ['BLERead'],
-//     structure: ['Float32'],
-//     data: {pressure:[]}
-//   }
-}
+  record_data = {
+   timestamp: [],
+   X: [],
+   Y: [],
+   Z: [],
+  };
 
+  const sensors = Object.keys(BLEsense);
+  const SERVICE_UUID = "6fbe1da7-0000-44de-92c4-bb6e04fb0212";
+  var bytesReceived = 0;
+  var bytesPrevious = 0;
 
-const sensors = Object.keys(BLEsense);
-const SERVICE_UUID = '6fbe1da7-0000-44de-92c4-bb6e04fb0212';
-var bytesReceived = 0;
-var bytesPrevious = 0;
+  // UI elements
+  const bigButton = document.getElementById("bigButton");
+  const BLEstatus = document.getElementById("bluetooth");
 
-// UI elements
-const bigButton = document.getElementById('bigButton');
-const BLEstatus = document.getElementById('bluetooth');
-
-if ("bluetooth" in navigator) {
-  bigButton.addEventListener('click', function(event) {
+  if ("bluetooth" in navigator) {
+   bigButton.addEventListener("click", function (event) {
+    // console.log(Object.keys(BLEsense[sensor].data));
     connect();
-  });
-  // else the browser doesn't support bluetooth
-} else {
-  msg("browser not supported"); bigButton.style.backgroundColor = "red";
-  alert("Error: This browser doesn't support Web Bluetooth. Try using Chrome.");
-}
+   });
+   // else the browser doesn't support bluetooth
+  } else {
+   msg("browser not supported");
+   bigButton.style.backgroundColor = "red";
+   alert(
+    "Error: This browser doesn't support Web Bluetooth. Try using Chrome."
+   );
+  }
 
-function msg(m){
-  BLEstatus.innerHTML = m;
-}
+  function msg(m) {
+   BLEstatus.innerHTML = m;
+  }
 
-async function connect() {
-  bigButton.style.backgroundColor="grey";
-  msg('requesting device ...');
+  async function connect() {
+   bigButton.style.backgroundColor = "grey";
+   msg("requesting device ...");
 
-  const device = await navigator.bluetooth.requestDevice({
+   const device = await navigator.bluetooth.requestDevice({
     filters: [
-      {
-        services: [SERVICE_UUID] // SERVICE_UUID
-      }
-    ]
-  });
+     {
+      // acceptAllDevices:true
+      services: [SERVICE_UUID], // SERVICE_UUID
+     },
+    ],
+   });
 
-  msg('connecting to device ...');
-  device.addEventListener('gattserverdisconnected', onDisconnected);
-  const server = await device.gatt.connect();
+   msg("connecting to device ...");
+   device.addEventListener("gattserverdisconnected", onDisconnected);
+   const server = await device.gatt.connect();
 
-  msg('getting primary service ...');
-  const service = await server.getPrimaryService(SERVICE_UUID);
+   msg("getting primary service ...");
+   const service = await server.getPrimaryService(SERVICE_UUID);
 
-  // Set up the characteristics
-  for (const sensor of sensors) {
-    msg('characteristic '+sensor+"...");
-    BLEsense[sensor].characteristic = await service.getCharacteristic(BLEsense[sensor].uuid);
+   // Set up the characteristics
+   for (const sensor of sensors) {
+    msg("characteristic " + sensor + "...");
+    BLEsense[sensor].characteristic = await service.getCharacteristic(
+     BLEsense[sensor].uuid
+    );
     // Set up notification
-    if (BLEsense[sensor].properties.includes("BLENotify")){
-      BLEsense[sensor].characteristic.addEventListener('characteristicvaluechanged',function(event){handleIncoming(BLEsense[sensor],event.target.value);});
-      await BLEsense[sensor].characteristic.startNotifications();
+    if (BLEsense[sensor].properties.includes("BLENotify")) {
+     BLEsense[sensor].characteristic.addEventListener(
+      "characteristicvaluechanged",
+      function (event) {
+       handleIncoming(BLEsense[sensor], event.target.value);
+      }
+     );
+     await BLEsense[sensor].characteristic.startNotifications();
     }
     // Set up polling for read
-    if (BLEsense[sensor].properties.includes("BLERead")){
-      BLEsense[sensor].polling = setInterval(function() {
-        BLEsense[sensor].characteristic.readValue().then(function(data){handleIncoming(BLEsense[sensor],data);})}
-        , 500);
-      }
-
-      BLEsense[sensor].rendered = false;
+    if (BLEsense[sensor].properties.includes("BLERead")) {
+     BLEsense[sensor].polling = setInterval(function () {
+      BLEsense[sensor].characteristic.readValue().then(function (data) {
+       handleIncoming(BLEsense[sensor], data);
+      });
+     }, 500);
     }
-    bigButton.style.backgroundColor = 'green';
-    msg('connected.');
 
-    // initColorPicker();
+    BLEsense[sensor].rendered = false;
+   }
+   bigButton.style.backgroundColor = "green";
+   msg("connected.");
+
+   // initColorPicker();
   }
 
   function handleIncoming(sensor, dataReceived) {
-    const columns = Object.keys(sensor.data); // column headings for this sensor
-    const typeMap = {
-      "Uint8":    {fn:DataView.prototype.getUint8,    bytes:1},
-      "Uint16":   {fn:DataView.prototype.getUint16,   bytes:2},
-      "Float32":  {fn:DataView.prototype.getFloat32,  bytes:4}
-    };
-    var packetPointer = 0,i = 0;
+   const columns = Object.keys(sensor.data); // column headings for this sensor
+   //    console.log(sensor);
+   const typeMap = {
+    Uint8: { fn: DataView.prototype.getUint8, bytes: 1 },
+    Uint16: { fn: DataView.prototype.getUint16, bytes: 2 },
+    Float32: { fn: DataView.prototype.getFloat32, bytes: 4 },
+   };
+   var packetPointer = 0,
+    i = 0;
 
-    // Read each sensor value in the BLE packet and push into the data array
-    sensor.structure.forEach(function(dataType){
-      // Lookup function to extract data for given sensor property type
-      var dataViewFn = typeMap[dataType].fn.bind(dataReceived);
-      // Read sensor ouput value - true => Little Endian
-      var unpackedValue = dataViewFn(packetPointer,true);
-      // Push sensor reading onto data array
-      sensor.data[columns[i]].push(unpackedValue);
-      // Keep array at buffer size
-      if (sensor.data[columns[i]].length> maxRecords) {sensor.data[columns[i]].shift();}
-      // move pointer forward in data packet to next value
-      packetPointer += typeMap[dataType].bytes;
-      bytesReceived += typeMap[dataType].bytes;
-      i++;
-    });
-    sensor.rendered = false; // flag - vizualization needs to be updated
+   // Read each sensor value in the BLE packet and push into the data array
+   sensor.structure.forEach(function (dataType) {
+    // Lookup function to extract data for given sensor property type
+    var dataViewFn = typeMap[dataType].fn.bind(dataReceived);
+    // Read sensor ouput value - true => Little Endian
+    var unpackedValue = dataViewFn(packetPointer, true);
+    // Push sensor reading onto data array
+    sensor.data[columns[i]].push(unpackedValue);
+    // Keep array at buffer size
+    if (sensor.data[columns[i]].length > maxRecords) {
+     sensor.data[columns[i]].shift();
+    }
+    // move pointer forward in data packet to next value
+    packetPointer += typeMap[dataType].bytes;
+    bytesReceived += typeMap[dataType].bytes;
+    i++;
+   });
+   sensor.rendered = false; // flag - vizualization needs to be updated
   }
 
   function onDisconnected(event) {
-    let device = event.target;
-    bigButton.style.backgroundColor="red";
-    // clear read polling
-    for (const sensor of sensors) {
-      if(typeof BLEsense[sensor].polling !== 'undefined'){
-        clearInterval(BLEsense[sensor].polling);
-      }
+   let device = event.target;
+   bigButton.style.backgroundColor = "red";
+   // clear read polling
+   for (const sensor of sensors) {
+    if (typeof BLEsense[sensor].polling !== "undefined") {
+     clearInterval(BLEsense[sensor].polling);
     }
-    // clear color picker write
-    const colorPickerElement = document.getElementById("color-picker-container");
-    colorPickerElement.removeChild(colorPickerElement.firstChild);
+   }
+   // clear color picker write
+   const colorPickerElement = document.getElementById("color-picker-container");
+   colorPickerElement.removeChild(colorPickerElement.firstChild);
 
-    msg('Device ' + device.name + ' is disconnected.');
+   msg("Device " + device.name + " is disconnected.");
   }
 
-  function BLEwriteTo(sensor){
-    if (BLEsense[sensor].writeBusy) return; // dropping writes when one is in progress instead of queuing as LED is non-critical / realtime
-    BLEsense[sensor].writeBusy = true; // Ensure no write happens when GATT operation in progress
-    BLEsense[sensor].characteristic.writeValue(BLEsense[sensor].writeValue)
-    .then(_ => {
-      BLEsense[sensor].writeBusy = false;
+  function BLEwriteTo(sensor) {
+   if (BLEsense[sensor].writeBusy) return; // dropping writes when one is in progress instead of queuing as LED is non-critical / realtime
+   BLEsense[sensor].writeBusy = true; // Ensure no write happens when GATT operation in progress
+   BLEsense[sensor].characteristic
+    .writeValue(BLEsense[sensor].writeValue)
+    .then((_) => {
+     BLEsense[sensor].writeBusy = false;
     })
-    .catch(error => {
-      console.log(error);
+    .catch((error) => {
+     console.log(error);
     });
   }
 
-  </script>
-  <script>
+  function startTimer() {
+   tens++;
 
-  function initColorPicker(){
-    BLEsense.led.colorPicker = new iro.ColorPicker("#color-picker-container", {
-      width: 150,
-      color: "rgb(255, 0, 0)",
-      borderWidth: 1,
-      borderColor: "#fff",
-      sliderHeight: 6,
-      sliderMargin: 6
-    });
-    // RGB Color Picker
-    BLEsense.led.colorPicker.on('color:change', updateModelLed);
-    function updateModelLed(color){
-      ledLight.color.setHex( "0x"+color.hexString.substring(1,7) );
-      ledMaterial.color.set(color.hexString)   // where r, g, and b are 0 to 1
-      var rgb_values = Uint8Array.of(color.rgb.r,color.rgb.g,color.rgb.b);
-      BLEsense['led'].writeValue = rgb_values;
-      BLEwriteTo('led');
-    }
+   if (tens <= 9) {
+    appendTens.innerHTML = "0" + tens;
+   }
+
+   if (tens > 9) {
+    appendTens.innerHTML = tens;
+   }
+
+   if (tens > 99) {
+    console.log("seconds");
+    seconds++;
+    appendSeconds.innerHTML = "0" + seconds;
+    tens = 0;
+    appendTens.innerHTML = "0" + 0;
+   }
+
+   if (seconds > 9) {
+    appendSeconds.innerHTML = seconds;
+   }
+  }
+ </script>
+ <script>
+  function initColorPicker() {
+   BLEsense.led.colorPicker = new iro.ColorPicker("#color-picker-container", {
+    width: 150,
+    color: "rgb(255, 0, 0)",
+    borderWidth: 1,
+    borderColor: "#fff",
+    sliderHeight: 6,
+    sliderMargin: 6,
+   });
+   // RGB Color Picker
+   BLEsense.led.colorPicker.on("color:change", updateModelLed);
+   function updateModelLed(color) {
+    ledLight.color.setHex("0x" + color.hexString.substring(1, 7));
+    ledMaterial.color.set(color.hexString); // where r, g, and b are 0 to 1
+    var rgb_values = Uint8Array.of(color.rgb.r, color.rgb.g, color.rgb.b);
+    BLEsense["led"].writeValue = rgb_values;
+    BLEwriteTo("led");
+   }
   }
 
   // Graphing
-  const colors = ["#FF355E","#FD5B20","#FF6037","#FF9966","#FF9933","#FFCC33","#FFFF66","#FFFF66","#CCFF00","#66FF66","#AAF0D1","#50BFE6","#FF6EFF","#EE34D2","#FF00CC","#FF00CC"];
+  const colors = [
+   "#FF355E",
+   "#FD5B20",
+   "#FF6037",
+   "#FF9966",
+   "#FF9933",
+   "#FFCC33",
+   "#FFFF66",
+   "#FFFF66",
+   "#CCFF00",
+   "#66FF66",
+   "#AAF0D1",
+   "#50BFE6",
+   "#FF6EFF",
+   "#EE34D2",
+   "#FF00CC",
+   "#FF00CC",
+  ];
   var colorIndex = 0;
-  function initGraph(sensor){
-    var title = sensor;
-    var series = Object.keys(BLEsense[sensor].data);
-    var format = [];
-    series.forEach(function(item){
-      colorIndex++;
-      if (colorIndex>colors.length) {colorIndex=0;}
-      format.push({
-        y: [],
-        name: item,
-        mode: 'lines',
-        width: 1,
-        line: {width: 1,color: colors[colorIndex]}
-      });
-    });
-
-    Plotly.plot(title,format,{
-      plot_bgcolor: '#111111',
-      paper_bgcolor: '#111111',
-      margin: {l:8,r:8,b:18,t:18},
-      showlegend: false,
-      yaxis: {'showticklabels':false},
-      xaxis: {
-        'range': [0,maxRecords],
-      'showticklabels':false,
-        'autorange': false,
-        'showgrid': true,
-  'zeroline': true,
-        tickfont: {size: 8}
-      }
+  function initGraph(sensor) {
+   var title = sensor;
+   var series = Object.keys(BLEsense[sensor].data);
+   var format = [];
+   series.forEach(function (item) {
+    colorIndex++;
+    if (colorIndex > colors.length) {
+     colorIndex = 0;
     }
-  );
-}
-
-// Microphone spectrum analyser
-// function initSpectrum(){
-//   var canvas = document.getElementById('mic');
-//   const micctx = canvas.getContext('2d');
-//   const bucketLabels = Object.keys(BLEsense['microphone'].data);
-//   micctx.fillStyle = "#111111";//"rgba("+R+","+G+","+B+")";
-//   micctx.fillRect(0, 0, canvas.width, canvas.height);
-//   const thickness = canvas.width / bucketLabels.length;
-//   canvas = document.getElementById('micbg');
-//   const bgctx = canvas.getContext('2d');
-//   bgctx.fillStyle = "#111111";
-//   bgctx.fillRect(0, 0, 256, 118);
-//   var r = 255; g = 0; b = 0;
-
-//   for (j=0;j<256;j+=2){
-//     for (i=0;i<32;i++){
-//       g++;
-//       if (j>64) {r-=2;}
-//       bgctx.fillStyle = "rgba("+r+","+g+","+b+")";
-//       bgctx.fillRect(i*thickness, j, thickness-1, 1);
-//     }
-//   }
-// }
-
-// // 3d model
-// var renderer = new THREE.WebGLRenderer();
-// var scene = new THREE.Scene();
-// var camera = new THREE.PerspectiveCamera(75, 1, 1, 10000);
-
-// function init3D(){
-//   var container = document.getElementById( '3d' );
-//   var loader = new THREE.GLTFLoader();
-//   scene.background = new THREE.Color( 0x111111 );
-//   renderer.setSize( 177, 177 );
-//   renderer.setPixelRatio( 4 );
-//   container.appendChild( renderer.domElement );
-//   loader.load( 'models/nano33ble.glb',
-//   // called when the Arduinio model is loaded
-//   function ( gltf ) {
-
-//     // Model
-//     arduinoModel = gltf.scene;
-//     scene.add(arduinoModel);
-
-//     // LED
-//     var geometry = new THREE.BoxGeometry( 1, 1, 1 );
-//     ledMaterial = new THREE.MeshBasicMaterial( {color: 0x111111} );
-//     ledObject = new THREE.Mesh( geometry, ledMaterial );
-//     ledObject.position.set( -4.5, 4, 0 );
-//     arduinoModel.add( ledObject );
-//     ledLight = new THREE.PointLight( 0x111111, 3, 100 );
-//     ledLight.position.set( -4.5, 4, -1 );
-//     arduinoModel.add( ledLight );
-//     var sphereSize = 1;
-
-//     // Light
-//     const color = 0xFFFFFF;
-//     const intensity = 1;
-//     const light = new THREE.DirectionalLight(color, intensity);
-//     light.position.set(-20, 100, 0);
-//     light.target.position.set(0, 0, 0);
-//     scene.add(light);
-//     scene.add(light.target);
-//     var hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 1000);
-//     scene.add(hemiLight);
-
-//     // Camera
-//     camera.position.set (0,40,0);
-//     camera.rotation.y = Math.PI; // 180
-//     camera.lookAt(new THREE.Vector3(0,0,0));
-//     renderer.render(scene, camera);
-//   }
-// );
-// }
-
-// function colorBars(sensor){
-//   // Color + light
-//   const canvas = document.getElementById('colors');
-//   const ctx = canvas.getContext('2d');
-//   const thickness = canvas.width/maxRecords;
-//   ctx.fillStyle = "#111111";
-//   ctx.fillRect(0, 0, canvas.width, canvas.height);
-//   for (i=0;i<maxRecords;i++){
-//     R = BLEsense[sensor].data.R[i];
-//     G = BLEsense[sensor].data.G[i];
-//     B = BLEsense[sensor].data.B[i];
-//     total = R + G + B;
-//     R=R/total*255;G=G/total*255;B=B/total*255;
-//     ctx.fillStyle = "rgba("+R+","+G+","+B+")";
-//     ctx.fillRect(i*thickness, 128, thickness-1, -total/5);
-//   }
-// }
-// return last item of array
-// Array.prototype.latest = function(){return this[this.length - 1];};
-
-// function spectrumAnalyser(sensor){
-//   const canvas = document.getElementById('mic');
-//   const micctx = canvas.getContext('2d');
-//   const bucketLabels = Object.keys(BLEsense[sensor].data);
-//   const thickness = canvas.width / bucketLabels.length;
-//   micctx.fillStyle = "#111111";
-//   micctx.fillRect(0, 0, canvas.width, canvas.height); // mask bars beneath
-//   for (i=0;i<bucketLabels.length;i++){
-//     var value = BLEsense[sensor].data[bucketLabels[i]].latest(); // display for latest record
-//     micctx.clearRect(i*thickness, 128, thickness-1, -value);
-//   }
-//   spectrogram(sensor);
-// }
-
-// function spectrogram(sensor){
-//   const canvas = document.getElementById('spectrogram');
-//   const ctx = canvas.getContext('2d');
-//   const bucketLabels = Object.keys(BLEsense[sensor].data);
-//   const records = BLEsense[sensor].data[bucketLabels[1]].length;
-//   const vthickness = 128/maxRecords;
-//   const thickness = canvas.width / bucketLabels.length;
-//   ctx.fillStyle = "#111111";
-//   ctx.fillRect(0, 0, 256, 256);
-//   for (i=0;i<bucketLabels.length;i++){ // for each fft bucket
-//     for (j=0;j<records;j++){ // for each record of that bucket
-//       var value = ((BLEsense[sensor].data[bucketLabels[i]][j])/255);
-//       var hue = (1 - value) * 240;
-//       ctx.fillStyle = "hsl("+hue+",100%,50%)";
-//       if (value<0.02) {ctx.fillStyle = "#111111";}
-//       ctx.fillRect(i*thickness,j*vthickness, thickness-1,vthickness-1);}
-//     }
-//   }
-
-  function graph(sensor){
-    var labels = Object.keys(BLEsense[sensor].data);
-    var values = [];
-    // after
-    labels.forEach(function(label){
-      values.push(BLEsense[sensor].data[label]);
+    format.push({
+     y: [],
+     name: item,
+     mode: "lines",
+     width: 1,
+     line: { width: 1, color: colors[colorIndex] },
     });
-    Plotly.restyle(sensor, {y: values});
+   });
+
+   Plotly.plot(title, format, {
+    plot_bgcolor: "#111111",
+    paper_bgcolor: "#111111",
+    margin: { l: 8, r: 8, b: 18, t: 18 },
+    showlegend: false,
+    yaxis: { showticklabels: false },
+    xaxis: {
+     range: [0, maxRecords],
+     showticklabels: false,
+     autorange: false,
+     showgrid: true,
+     zeroline: true,
+     tickfont: { size: 8 },
+    },
+   });
   }
 
-  function digit(sensor){
-    const value = BLEsense[sensor].data[sensor].latest();
-    const div = document.getElementById(sensor+"-value");
-    if (!Number.isNaN(value)) {div.innerHTML = Math.round(value*10)/10;};
+  var flag = 0,
+   timestamp_count = 0;
+  function graph(sensor) {
+   var labels = Object.keys(BLEsense[sensor].data);
+   var values = [];
+   //    console.log(labels[0]);
+   // after
+   labels.forEach(function (label) {
+    values.push(BLEsense[sensor].data[label]);
+    // if()
+   });
+   Plotly.restyle(sensor, { y: values });
   }
 
-//   function update3d(sensor){
-//     var Ax = BLEsense['accelerometer'].data.Ax.latest() * 0.0174533;
-//     var Ay = BLEsense['accelerometer'].data.Ay.latest() * 0.0174533;
-//     var Az = BLEsense['accelerometer'].data.Az.latest() * 0.0174533;
-//     var pitch = Math.atan2((-Ax) , Math.sqrt(Ay * Ay + Az * Az));
-//     var roll = Math.atan2(Ay , Az);
-//     arduinoModel.rotation.x = roll;
-//     arduinoModel.rotation.y = pitch;
-//     arduinoModel.rotation.z = 0;
-//     renderer.render(scene, camera);
-//   }
+  function digit(sensor) {
+   const value = BLEsense[sensor].data[sensor].latest();
+   const div = document.getElementById(sensor + "-value");
+   if (!Number.isNaN(value)) {
+    div.innerHTML = Math.round(value * 10) / 10;
+   }
+  }
+  var download_flag = 0;
+  function start_recording() {
+   flag = 1;
+   record_data.timestamp = [];
+   record_data.X = [];
+   record_data.Y = [];
+   record_data.Z = [];
+   console.log("pressed");
+   timestamp_count = 0;
+   clearInterval(Interval);
+   Interval = setInterval(startTimer, 10);
+  }
+  function stop_recording() {
+   flag = 0;
+   console.log("pressed");
+   console.log(record_data);
+   download_flag = 1;
+   clearInterval(Interval);
+  }
 
-  function bytes(){
-    if (bytesReceived > bytesPrevious){
-      bytesPrevious= bytesReceived;
-      msg(bytesReceived+" bytes received");
-    }
+  const download_file = function (data) {
+   // Creating a Blob for having a csv file format
+   // and passing the data with type
+   const blob = new Blob([data], { type: "text/csv" });
+
+   // Creating an object for downloading url
+   const url = window.URL.createObjectURL(blob);
+
+   // Creating an anchor(a) tag of HTML
+   const a = document.createElement("a");
+
+   // Passing the blob downloading url
+   a.setAttribute("href", url);
+
+   // Setting the anchor tag attribute for downloading
+   // and passing the download file name
+   a.setAttribute("download", "download.csv");
+
+   // Performing a download with click
+   a.click();
+  };
+
+  const csvmaker = function (data) {
+   // Empty array for storing the values
+   csvRows = [];
+
+   // Headers is basically a keys of an object
+   // which is id, name, and profession
+   const headers = Object.keys(data);
+   console.log(headers);
+   // As for making csv format, headers must
+   // be separated by comma and pushing it
+   // into array
+   csvRows.push(headers.join(","));
+   // console.log(csvRows);
+   // Pushing Object values into array
+   // with comma separation
+   //    const values =
+   for (let index = 0; index < data.timestamp.length; index++) {
+    let store_temp = [
+     data.timestamp[index],
+     data.X[index],
+     data.Y[index],
+     data.Z[index],
+    ];
+    csvRows.push(store_temp);
+    // const time = data.X[index];
+    // console.log(element);
+   }
+   // data.forEach(element => {
+   //     console.log(element);
+   // });
+   //    const values = Object.values(data).join(",");
+   //    csvRows.push(values);
+   console.log(csvRows);
+   // Returning the array joining with new line
+   return csvRows.join("\n");
+  };
+
+  function download() {
+   if (flag == 0 && download_flag == 1) {
+    clearInterval(Interval);
+    tens = "00";
+    seconds = "00";
+    appendTens.innerHTML = tens;
+    appendSeconds.innerHTML = seconds;
+    const csvdata = csvmaker(record_data);
+    // console.log(csvdata);
+    download_file(csvdata);
+   }
+  }
+  //   function update3d(sensor){
+  //     var Ax = BLEsense['accelerometer'].data.Ax.latest() * 0.0174533;
+  //     var Ay = BLEsense['accelerometer'].data.Ay.latest() * 0.0174533;
+  //     var Az = BLEsense['accelerometer'].data.Az.latest() * 0.0174533;
+  //     var pitch = Math.atan2((-Ax) , Math.sqrt(Ay * Ay + Az * Az));
+  //     var roll = Math.atan2(Ay , Az);
+  //     arduinoModel.rotation.x = roll;
+  //     arduinoModel.rotation.y = pitch;
+  //     arduinoModel.rotation.z = 0;
+  //     renderer.render(scene, camera);
+  //   }
+
+  function bytes() {
+   if (bytesReceived > bytesPrevious) {
+    bytesPrevious = bytesReceived;
+    msg(bytesReceived + " bytes received");
+   }
+  }
+
+  function write_to_file(sensor) {
+   if (flag == 1) {
+    // console.log(sensor);
+    // BLEsense[sensor].data[label]
+    // console.log(
+    //  BLEsense[sensor].data["Ax"],
+    //  BLEsense[sensor].data["Ay"],
+    //  BLEsense[sensor].data["Az"]
+    // );
+    // let json_data_file = {
+    //     "timestamp":timestamp_count,
+    //     "X":BLEsense[sensor].data["Ax"],
+    //     "Y":BLEsense[sensor].data["Ay"],
+    //     "Z":BLEsense[sensor].data["Az"]
+    // }
+    // record_data.push(json_data_file)
+    record_data.timestamp.push(timestamp_count);
+    record_data.X.push(BLEsense[sensor].data["Ax"][63]);
+    record_data.Y.push(BLEsense[sensor].data["Ay"][63]);
+    record_data.Z.push(BLEsense[sensor].data["Az"][63]);
+    timestamp_count += 1000 / 30;
+   }
   }
 
   var skip_frame = false;
-  function draw(){
-    function updateViz(sensor,fns){
-      if (BLEsense[sensor].rendered == false) { // only render if new values are received
-        fns.forEach(function(fn){
-          fn(sensor);
-        });
-        BLEsense[sensor].rendered = true;
-      }
+  function draw() {
+   function updateViz(sensor, fns) {
+    if (BLEsense[sensor].rendered == false) {
+     // only render if new values are received
+     fns.forEach(function (fn) {
+      fn(sensor);
+     });
+     BLEsense[sensor].rendered = true;
     }
-    if (skip_frame == false){ // TODO update with fuction to iterate object with viz function as a property
+   }
+   if (skip_frame == false) {
+    // TODO update with fuction to iterate object with viz function as a property
     //   updateViz('colorimeter', [colorBars]);
     //   updateViz('microphone', [spectrumAnalyser]);
-      updateViz('gyroscope', [graph]);
-      updateViz('accelerometer', [graph]);
+    updateViz("gyroscope", [graph]);
+    updateViz("accelerometer", [graph, write_to_file]);
     //   updateViz('proximity', [digit]);
     //   updateViz('temperature', [graph,digit]);
     //   updateViz('humidity', [graph,digit]);
     //   updateViz('pressure', [graph,digit]);
-      bytes();
+    //   bytes();
 
-      skip_frame = true; // render alternate frames = 30fps
-    } else {skip_frame=false;}
-    requestAnimationFrame(draw);
+    skip_frame = true; // render alternate frames = 30fps
+   } else {
+    skip_frame = false;
+   }
+   requestAnimationFrame(draw);
   }
 
-  initGraph('accelerometer');
-  initGraph('gyroscope');
-//   initGraph('temperature');
-//   initGraph('humidity');
-//   initGraph('pressure');
-//   initSpectrum();
-//   init3D();
+  initGraph("accelerometer");
+  initGraph("gyroscope");
+  //   initGraph('temperature');
+  //   initGraph('humidity');
+  //   initGraph('pressure');
+  //   initSpectrum();
+  //   init3D();
   requestAnimationFrame(draw);
-  </script>
-  </html>
+ </script>
+</html>
