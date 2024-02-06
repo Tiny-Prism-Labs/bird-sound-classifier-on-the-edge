@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+ <head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Edge Web BLE</title>
+  <link
+   href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+   rel="stylesheet"
+   integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
+   crossorigin="anonymous"
+  />
+  <style>
+   /* .fix-height{
+    height: 10em;
+  } */
+   /* #placeholder{
+    height: 10em;
+
+  } */
+
+   .scroll {
+    max-height: 300px;
+    overflow-y: auto;
+   }
+
+   .container {
+    justify-content: center;
+   }
+
+   .btn-start {
+    background-color: rgba(90, 222, 87, 1);
+   }
+
+   .btn-stop {
+    background-color: rgba(233, 103, 103, 1);
+   }
+
+   .btn-dwnld {
+    background-color: rgba(95, 231, 206, 1);
+   }
+  </style>
+ </head>
+
+ <body>
+  <div class="container">
+   <div class="d-flex justify-content-center pt-3">
+    <h2>Activity Classifier</h2>
+   </div>
+   <!-- <div>
+            <a href="fan_ble.html">Fan detect</a>
+          </div> -->
+   <br />
+   <div class="d-flex justify-content-center">
+    <div class="pe-5">
+     <button type="button" class="btn btn-start" onclick="startnotify()">
+      <strong> Start BLE</strong>
+     </button>
+    </div>
+    <div>
+     <button type="button" class="btn btn-stop" onclick="stopnotify()">
+      <strong> Stop BLE</strong>
+     </button>
+    </div>
+   </div>
+
+   <br /><br />
+   <div class="d-flex justify-content-center">
+    <div id="jump">
+     <img src="../img/jumping.png" alt="" />
+     <h3 class="d-flex justify-content-center">Jump Detected</h3>
+    </div>
+    <div id="leg">
+     <img src="../img/leg.png" alt="" />
+     <h3 class="d-flex justify-content-center">Leg Raise Detected</h3>
+    </div>
+    <div id="swing">
+     <img src="../img/swing.png" alt="" />
+     <h3 class="d-flex justify-content-center">Swing Detected</h3>
+    </div>
+   </div>
+   <br />
+   <br />
+   <div class="d-flex justify-content-center">
+    <div id="danger">
+     <img src="../img/Power danger mark free icon 1.png" alt="" />
+     <h3 class="d-flex justify-content-center">Unknown Activity Detected</h3>
+    </div>
+   </div>
+   <!-- <svg src="../img/pc fan icon.svg">
+
+        </svg> -->
+   <!-- <div class="card scroll">
+            <div class="card-body">
+                <span id="placeholder">
+               </div>
+      </div> -->
+   <br />
+   <br />
+   <div class="d-flex justify-content-center">
+    <button type="button" class="btn btn-dwnld" onclick="download()">
+     <strong>Download Logs</strong>
+    </button>
+   </div>
+
+   <div class="d-flex justify-content-center pt-4">
+    <div class="card scroll">
+     <div class="card-body">
+      <strong>Start BLE</strong> : Starting a connection between Nano33 BLE and
+      this site
+      <br />
+      <strong>Stop BLE</strong> : Will terminate the BLE connection and will no
+      longer recieve any data
+      <br />
+      <strong>Download Logs</strong> : Creates a json file with all the output
+      displayed
+      <br />
+      <strong
+       >For Activity Tracking Visualization
+       <a href="activityVisual.html">Click here</a>
+      </strong>
+      <br />
+      <strong
+       >For Activity Classification
+       <a href="activityclassify.html">Click here</a>
+      </strong>
+      <!-- <strong class="d-flex justify-content-center pt-4"> Read the &nbsp; <a href="article.html"> article </a> &nbsp; about this project </strong> -->
+     </div>
+    </div>
+   </div>
+  </div>
+
+  <script>
+   var characteristicUuid = "beb5483e-36e1-4688-b7f5-ea07361b26a8";
+   var serviceUuid = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
+   var charuuid_anamoly = "4b1c56fa-5434-45f1-95d4-d089f088a031";
+   var temp_uuid = "9d30405e-6e2f-4230-b564-704b966615c4";
+   var pressure_uuid = "23fc9a00-cbdd-4228-8c51-086d01aefbff";
+   var hum_uuid = "d6ed1878-6350-4536-981f-1a5645197248";
+   var bird_char = "";
+   var temp_char = "";
+   var hum_char = "";
+   var press_char = "";
+
+   var ph = document.getElementById("placeholder");
+   var limit = 0;
+   var data_json = [];
+   //    var fan_running_div = document.getElementById("fan_running");
+   //    var fan_stopped_div = document.getElementById("fan_stopped");
+   var jump_div = document.getElementById("jump");
+   var leg_div = document.getElementById("leg");
+   var swing_div = document.getElementById("swing");
+   var danger_div = document.getElementById("danger");
+   var anamoly_value = 0;
+   jump_div.style.visibility = "hidden";
+   leg_div.style.visibility = "hidden";
+   swing_div.style.visibility = "hidden";
+   danger_div.style.visibility = "hidden";
+   function isWebBluetoothEnabled() {
+    if (!navigator.bluetooth) {
+     console.log("Web Bluetooth API is not available in this browser!");
+     return false;
+    }
+
+    return true;
+   }
+
+   function getDeviceInfo() {
+    let options = {
+     filters: [{ services: [serviceUuid] }],
+    };
+
+    console.log("Requesting Bluetooth Device...");
+    navigator.bluetooth
+     .requestDevice(options)
+     .then((device) => {
+      console.log("> Name: " + device.name);
+     })
+     .catch((error) => {
+      console.log("Argh! " + error);
+     });
+   }
+
+   function startnotify() {
+    navigator.bluetooth
+     .requestDevice({ filters: [{ services: [serviceUuid] }] })
+     .then((device) => {
+      // ph.innerHTML = "<strong>Connecting to GATT Server...</strong>";
+      return device.gatt.connect();
+     })
+     .then((server) => {
+      // ph.innerHTML =
+      //   ph.innerHTML + "<br> <strong>Getting Service...</strong>";
+      return server.getPrimaryService(serviceUuid);
+     })
+     .then((service) => {
+      // ph.innerHTML =
+      //   ph.innerHTML + "<br> <strong>Getting Characteristic...</strong>";
+      // return service.getCharacteristic(characteristicUuid);
+      return Promise.all([
+       service.getCharacteristic(characteristicUuid).then(classifybirds),
+       service.getCharacteristic(charuuid_anamoly).then(logtemp),
+       // service.getCharacteristic(hum_uuid).then(loghum),service.getCharacteristic(pressure_uuid).then(logpress)
+      ]);
+     })
+     // .then((characteristic) => {
+     //   myCharacteristic = characteristic;
+     //   return myCharacteristic.startNotifications().then((_) => {
+     //     // console.log('> Notifications started');
+     //     ph.innerHTML = ph.innerHTML + "<br> <strong>Notifications started</strong>";
+     //     myCharacteristic.addEventListener(
+     //       "characteristicvaluechanged",
+     //       handleNotifications
+     //     );
+     //   });
+     // })
+     .catch((error) => {
+      console.log("Argh! " + error);
+     });
+   }
+
+   function classifybirds(characteristic) {
+    bird_char = characteristic;
+    return characteristic.startNotifications().then((_) => {
+     // console.log('> Notifications started');
+     // ph.innerHTML =
+     //   ph.innerHTML + "<br> <strong>Bird Notifications started</strong>";
+     characteristic.addEventListener(
+      "characteristicvaluechanged",
+      handleNotifications
+     );
+    });
+   }
+
+   function logtemp(characteristic) {
+    temp_char = characteristic;
+    return characteristic.startNotifications().then((_) => {
+     // console.log('> Notifications started');
+     // ph.innerHTML = ph.innerHTML + "<br> <strong>Temp Notifications started</strong>";
+     characteristic.addEventListener(
+      "characteristicvaluechanged",
+      handleNotifications_anamoluy
+     );
+     // characteristic.addEventListener(
+     //   "characteristicvaluechanged",
+     //   //logvalues
+     // (event)=>{
+     //   let value = event.target.value;
+     //   values = value.getFloat32(0);
+
+     //   // console.log("Temperature: "+values);
+     //   // console.log(value);
+     // }
+     // );
+    });
+   }
+   function loghum(characteristic) {
+    hum_char = characteristic;
+    return characteristic.startNotifications().then((_) => {
+     // console.log('> Notifications started');
+     // ph.innerHTML = ph.innerHTML + "<br> <strong>Humidity Notifications started</strong>";
+     characteristic.addEventListener("characteristicvaluechanged", (event) => {
+      let value = event.target.value;
+      values = value.getFloat32(0);
+
+      // console.log("Humidity: "+values);
+      console.log(value);
+     });
+    });
+   }
+   function logpress(characteristic) {
+    press_char = characteristic;
+    return characteristic.startNotifications().then((_) => {
+     // console.log('> Notifications started');
+     // ph.innerHTML = ph.innerHTML + "<br> <strong>Pressure Notifications started</strong>";
+     characteristic.addEventListener("characteristicvaluechanged", (event) => {
+      let value = event.target.value;
+      values = value.getFloat32(0);
+
+      // console.log("Pressure: "+values);
+      // console.log(value);
+     });
+    });
+   }
+
+   function logvalues(event) {
+    let value = event.target.value;
+    values = value.getFloat32(0);
+    console.log(values);
+   }
+
+   /*
+
+      function startnotify() {
+        navigator.bluetooth
+          .requestDevice({ filters: [{ services: [serviceUuid] }] })
+          .then((device) => {
+            ph.innerHTML = "<strong>Connecting to GATT Server...</strong>";
+            return device.gatt.connect();
+          })
+          .then((server) => {
+
+            ph.innerHTML = ph.innerHTML + "<br> <strong>Getting Service...</strong>";
+            return server.getPrimaryService(serviceUuid);
+          })
+          .then((service) => {
+
+            ph.innerHTML = ph.innerHTML + "<br> <strong>Getting Characteristic...</strong>";
+            return service.getCharacteristic(characteristicUuid);
+          })
+          .then((characteristic) => {
+            myCharacteristic = characteristic;
+            return myCharacteristic.startNotifications().then((_) => {
+              // console.log('> Notifications started');
+              ph.innerHTML = ph.innerHTML + "<br> <strong>Notifications started</strong>";
+              myCharacteristic.addEventListener(
+                "characteristicvaluechanged",
+                handleNotifications
+              );
+            });
+          })
+          .catch((error) => {
+            console.log("Argh! " + error);
+          });
+      }
+
+
+
+*/
+   function stopnotify() {
+    if (bird_char) {
+     bird_char
+      .stopNotifications()
+      .then((_) => {
+       // ph.innerHTML =
+       //   ph.innerHTML +
+       //   "<br> <strong>Bird Notifications stopped</strong>";
+       bird_char.removeEventListener(
+        "characteristicvaluechanged",
+        handleNotifications
+       );
+      })
+      .catch((error) => {
+       log("Argh! " + error);
+      });
+    }
+
+    if (temp_char) {
+     temp_char
+      .stopNotifications()
+      .then((_) => {
+       // ph.innerHTML = ph.innerHTML + "<br> <strong>Temp Notifications stopped</strong>";
+       temp_char.removeEventListener("characteristicvaluechanged", logvalues);
+      })
+      .catch((error) => {
+       log("Argh! " + error);
+      });
+    }
+
+    if (hum_char) {
+     hum_char
+      .stopNotifications()
+      .then((_) => {
+       // ph.innerHTML = ph.innerHTML + "<br> <strong>Humidity Notifications stopped</strong>";
+       hum_char.removeEventListener("characteristicvaluechanged", logvalues);
+      })
+      .catch((error) => {
+       log("Argh! " + error);
+      });
+    }
+
+    if (press_char) {
+     press_char
+      .stopNotifications()
+      .then((_) => {
+       // ph.innerHTML = ph.innerHTML + "<br> <strong>Pressure Notifications stopped</strong>";
+       press_char.removeEventListener("characteristicvaluechanged", logvalues);
+      })
+      .catch((error) => {
+       log("Argh! " + error);
+      });
+    }
+   }
+
+   // document
+   //   .querySelector("form")
+   //   .addEventListener("submit", function (event) {
+   //     event.stopPropagation();
+   //     event.preventDefault();
+
+   //     if (isWebBluetoothEnabled()) {
+   //       getDeviceInfo();
+   //     }
+   //   });
+   function handleNotifications_anamoluy(event) {
+    let value = event.target.value;
+    // // console.log(value);
+    // const view = new DataView(event);
+    // console.log(view.getFloat32(0));
+    values = value.getUint8(0);
+    timestamps = new Date().toLocaleString();
+    time = new Date().toLocaleTimeString();
+    console.log("Anamoly Score : " + values);
+    if (values > 1.9) {
+     anamoly_value = values;
+     danger_div.style.visibility = "visible";
+     jump_div.style.visibility = "hidden";
+     leg_div.style.visibility = "hidden";
+     swing_div.style.visibility = "hidden";
+    }
+    anamoly_value = values;
+    // ph.innerHTML
+    //   ph.innerHTML + "<br> " + "-> " + time + ": Anamoly  " + values;
+   }
+
+   function handleNotifications(event) {
+    let value = event.target.value;
+    console.log(value);
+    values = value.getUint8(0);
+    timestamps = new Date().toLocaleString();
+    time = new Date().toLocaleTimeString();
+    let bird = "";
+    if (values == 0 && anamoly_value < 1.9) {
+     bird = "Squat";
+     danger_div.style.visibility = "hidden";
+     jump_div.style.visibility = "visible";
+     leg_div.style.visibility = "hidden";
+     swing_div.style.visibility = "hidden";
+    } else if (values == 1 && anamoly_value < 1.9) {
+     bird = "Leg Raise";
+     danger_div.style.visibility = "hidden";
+     jump_div.style.visibility = "hidden";
+     leg_div.style.visibility = "visible";
+     swing_div.style.visibility = "hidden";
+    } else if (values == 2 && anamoly_value < 1.9) {
+     bird = "Swing";
+     danger_div.style.visibility = "hidden";
+     jump_div.style.visibility = "hidden";
+     leg_div.style.visibility = "hidden";
+     swing_div.style.visibility = "visible";
+    }
+    // if (values == 0) {
+    //   bird = "Noise";
+    //   data_json.push({'bird':bird, 'time':timestamps});
+    // } else if (values == 1) {
+    //   bird = "Laughing Kookaburra";
+    //   data_json.push({'bird':bird, 'time':timestamps});
+    // } else if (values == 2) {
+    //   bird = "Rose-ringed Parakeet";
+    //   data_json.push({'bird':bird, 'time':timestamps});
+    // } else if (values == 3) {
+    //   bird = "Square Tailed Drongo";
+    //   data_json.push({'bird':bird, 'time':timestamps});
+    // } else if (values == 4) {
+    //   bird = "Asian Koel";
+    //   data_json.push({'bird':bird, 'time':timestamps});
+    // } else if (values == 5) {
+    //   bird = "Greater Coucal";
+    //   data_json.push({'bird':bird, 'time':timestamps});
+    // } else if (values == 6) {
+    //   bird = "House Crow";
+    //   data_json.push({'bird':bird, 'time':timestamps});
+    // } else if (values == 7) {
+    //   bird = "Purple-rumped Sunbird";
+    //   data_json.push({'bird':bird, 'time':timestamps});
+    // } else if (values == 8) {
+    //   bird = "Red-whiskered Bulbul";
+    //   data_json.push({'bird':bird, 'time':timestamps});
+    // }
+
+    // ph.innerHTML = ph.innerHTML + "<br> " + "-> " + time + " : " + bird;
+   }
+
+   function download() {
+    console.log(data_json);
+    downloadTextFile(JSON.stringify(data_json), "bird_log.json");
+   }
+
+   function downloadTextFile(text, name) {
+    const a = document.createElement("a");
+    const type = name.split(".").pop();
+    a.href = URL.createObjectURL(
+     new Blob([text], { type: `text/${type === "txt" ? "plain" : type}` })
+    );
+    a.download = name;
+    a.click();
+   }
+  </script>
+  <script
+   src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+   integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+   crossorigin="anonymous"
+  ></script>
+ </body>
+</html>
