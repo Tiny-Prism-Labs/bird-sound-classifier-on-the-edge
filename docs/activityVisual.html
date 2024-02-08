@@ -440,14 +440,14 @@ enable the highlighted flag, and restart Chrome for now.
    "#FFCC33",
    "#FFFF66",
    "#FFFF66",
-   "#CCFF00",
-   "#66FF66",
-   "#AAF0D1",
-   "#50BFE6",
-   "#FF6EFF",
-   "#EE34D2",
-   "#FF00CC",
-   "#FF00CC",
+  //  "#CCFF00",
+  //  "#66FF66",
+  //  "#AAF0D1",
+  //  "#50BFE6",
+  //  "#FF6EFF",
+  //  "#EE34D2",
+  // "#FF00CC",
+  // "#FF00CC",
   ];
   var colorIndex = 0;
   function initGraph(sensor) {
@@ -472,15 +472,15 @@ enable the highlighted flag, and restart Chrome for now.
     plot_bgcolor: "#111111",
     paper_bgcolor: "#111111",
     margin: { l: 8, r: 8, b: 18, t: 18 },
-    showlegend: false,
-    yaxis: { showticklabels: false },
+    showlegend: true,
+    yaxis: { showticklabels: true },
     xaxis: {
      range: [0, maxRecords],
      showticklabels: false,
      autorange: false,
      showgrid: true,
      zeroline: true,
-     tickfont: { size: 8 },
+     tickfont: { size: 10 },
     },
    });
   }

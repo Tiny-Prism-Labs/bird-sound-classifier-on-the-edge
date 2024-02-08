@@ -402,7 +402,7 @@
     timestamps = new Date().toLocaleString();
     time = new Date().toLocaleTimeString();
     console.log("Anamoly Score : " + values);
-    if (values > 1.9) {
+    if (values > 0.9) {
      anamoly_value = values;
      danger_div.style.visibility = "visible";
      jump_div.style.visibility = "hidden";
@@ -421,19 +421,19 @@
     timestamps = new Date().toLocaleString();
     time = new Date().toLocaleTimeString();
     let bird = "";
-    if (values == 0 && anamoly_value < 1.9) {
+    if (values == 0 && anamoly_value < 0.9) {
      bird = "Squat";
      danger_div.style.visibility = "hidden";
      jump_div.style.visibility = "visible";
      leg_div.style.visibility = "hidden";
      swing_div.style.visibility = "hidden";
-    } else if (values == 1 && anamoly_value < 1.9) {
+    } else if (values == 1 && anamoly_value < 0.9) {
      bird = "Leg Raise";
      danger_div.style.visibility = "hidden";
      jump_div.style.visibility = "hidden";
      leg_div.style.visibility = "visible";
      swing_div.style.visibility = "hidden";
-    } else if (values == 2 && anamoly_value < 1.9) {
+    } else if (values == 2 && anamoly_value < 0.9) {
      bird = "Swing";
      danger_div.style.visibility = "hidden";
      jump_div.style.visibility = "hidden";
