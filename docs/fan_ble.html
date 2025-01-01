@@ -45,7 +45,7 @@
             <h2>Bird sound classifier over BLE</h2>
         </div>
 
-        <br />
+        <!-- <br />
         <div class="d-flex justify-content-center">
             <div class="pe-5">
                 <button type="button" class="btn btn-start" onclick="startnotify()">
@@ -71,8 +71,8 @@
         <button type="button" class="btn btn-dwnld" onclick="download()">
           <strong>Download Logs</strong> 
         </button>
-      </div>
-
+      </div> -->
+        
       <div class="d-flex justify-content-center pt-4"> 
         <div class="card scroll">
           <div class="card-body">
@@ -88,334 +88,213 @@
       </div>
     </div>
 
-    <script>
-      var characteristicUuid = "beb5483e-36e1-4688-b7f5-ea07361b26a8";
-      var serviceUuid = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
-      var temp_uuid = "9d30405e-6e2f-4230-b564-704b966615c4"
-      var pressure_uuid="23fc9a00-cbdd-4228-8c51-086d01aefbff"
-      var hum_uuid="d6ed1878-6350-4536-981f-1a5645197248"
-      var bird_char =''
-      var temp_char =''
-      var hum_char =''
-      var press_char ='' 
-
-      var ph = document.getElementById("placeholder");
-      var limit = 0;
-      var data_json = [];
-
-      function isWebBluetoothEnabled() {
-        if (!navigator.bluetooth) {
-          console.log("Web Bluetooth API is not available in this browser!");
-          return false;
-        }
-
-        return true;
+    <script type="text/javascript">
+      /*
+    Demo showing simple dashboard of Arduino BLE sense
+    
+    Based on: https://developers.google.com/web/updates/2015/07/interact-with-ble-devices-on-the-web
+    For earlier versions of Windows and Linux, you still have to go to chrome://flags/#enable-experimental-web-platform-features,
+    enable the highlighted flag, and restart Chrome for now.
+    */
+      //   import csvDownload from "json-to-csv-export";
+    
+      var seconds = 0;
+      var tens = 0;
+      var appendTens = document.getElementById("tens");
+      var appendSeconds = document.getElementById("seconds");
+      var buttonStart = document.getElementById("button-start");
+      var buttonStop = document.getElementById("button-stop");
+      var buttonReset = document.getElementById("button-reset");
+      var Interval;
+    
+      var maxRecords = 64;
+    
+      var BLEsense = {
+       accelerometer: {
+        uuid: "6fbe1da7-3001-44de-92c4-bb6e04fb0212",
+        properties: ["BLENotify"],
+        structure: ["Float32", "Float32", "Float32"],
+        data: { Ax: [], Ay: [], Az: [] },
+       },
+       gyroscope: {
+        uuid: "6fbe1da7-3002-44de-92c4-bb6e04fb0212",
+        properties: ["BLENotify"],
+        structure: ["Float32", "Float32", "Float32"],
+        data: { Gx: [], Gy: [], Gz: [] },
+       },
+      };
+    
+      record_data = {
+       timestamp: [],
+       X: [],
+       Y: [],
+       Z: [],
+      };
+    
+      const sensors = Object.keys(BLEsense);
+      const SERVICE_UUID = "6fbe1da7-0000-44de-92c4-bb6e04fb0212";
+      var bytesReceived = 0;
+      var bytesPrevious = 0;
+    
+      // UI elements
+      const bigButton = document.getElementById("bigButton");
+      const BLEstatus = document.getElementById("bluetooth");
+    
+      if ("bluetooth" in navigator) {
+       bigButton.addEventListener("click", function (event) {
+        // console.log(Object.keys(BLEsense[sensor].data));
+        connect();
+       });
+       // else the browser doesn't support bluetooth
+      } else {
+       msg("browser not supported");
+       bigButton.style.backgroundColor = "red";
+       alert(
+        "Error: This browser doesn't support Web Bluetooth. Try using Chrome."
+       );
       }
-
-      function getDeviceInfo() {
-        let options = {
-          filters: [
-            { services: [serviceUuid] },
-          ],
-        };
-
-        console.log("Requesting Bluetooth Device...");
-        navigator.bluetooth
-          .requestDevice(options)
-          .then((device) => {
-            console.log("> Name: " + device.name);
-          })
-          .catch((error) => {
-            console.log("Argh! " + error);
-          });
+    
+      function msg(m) {
+       BLEstatus.innerHTML = m;
       }
-
-      function startnotify() {
-        navigator.bluetooth
-          .requestDevice({ filters: [{ services: [serviceUuid] }] })
-          .then((device) => {
-            ph.innerHTML = "<strong>Connecting to GATT Server...</strong>";
-            return device.gatt.connect();
-          })
-          .then((server) => {
-
-            ph.innerHTML = ph.innerHTML + "<br> <strong>Getting Service...</strong>";
-            return server.getPrimaryService(serviceUuid);
-          })
-          .then((service) => {
-
-            ph.innerHTML = ph.innerHTML + "<br> <strong>Getting Characteristic...</strong>";
-            // return service.getCharacteristic(characteristicUuid);
-            return Promise.all([service.getCharacteristic(characteristicUuid).then(classifybirds),service.getCharacteristic(temp_uuid).then(logtemp),
-            service.getCharacteristic(hum_uuid).then(loghum),service.getCharacteristic(pressure_uuid).then(logpress)
-          ]);
-          })
-          // .then((characteristic) => {
-          //   myCharacteristic = characteristic;
-          //   return myCharacteristic.startNotifications().then((_) => {
-          //     // console.log('> Notifications started');
-          //     ph.innerHTML = ph.innerHTML + "<br> <strong>Notifications started</strong>";
-          //     myCharacteristic.addEventListener(
-          //       "characteristicvaluechanged",
-          //       handleNotifications
-          //     );
-          //   });
-          // })
-          .catch((error) => {
-            console.log("Argh! " + error);
-          });
-      }
-
-      function classifybirds(characteristic){
-        bird_char = characteristic
-    return characteristic.startNotifications().then((_) => {
-              // console.log('> Notifications started');
-              ph.innerHTML = ph.innerHTML + "<br> <strong>Bird Notifications started</strong>";
-              characteristic.addEventListener(
-                "characteristicvaluechanged",
-                handleNotifications
-              );
-    })
-
-      }
-
-      function logtemp(characteristic){
-        temp_char= characteristic
-        return characteristic.startNotifications().then((_) => {
-              // console.log('> Notifications started');
-              // ph.innerHTML = ph.innerHTML + "<br> <strong>Temp Notifications started</strong>";
-              characteristic.addEventListener(
-                "characteristicvaluechanged",
-                //logvalues
-              (event)=>{
-                let value = event.target.value;
-                values = value.getFloat32(0);
-                
-                // console.log("Temperature: "+values);
-                // console.log(value);
-              }
-              );
-    })
-
-      }
-      function loghum(characteristic){
-        hum_char= characteristic
-        return characteristic.startNotifications().then((_) => {
-              // console.log('> Notifications started');
-              // ph.innerHTML = ph.innerHTML + "<br> <strong>Humidity Notifications started</strong>";
-              characteristic.addEventListener(
-                "characteristicvaluechanged",
-                (event)=>{
-                let value = event.target.value;
-                values = value.getFloat32(0);
-               
-                // console.log("Humidity: "+values);
-                // console.log(value);
-                
-              }
-              );
-    })
-
-      }
-      function logpress(characteristic){
-        press_char= characteristic
-        return characteristic.startNotifications().then((_) => {
-              // console.log('> Notifications started');
-              // ph.innerHTML = ph.innerHTML + "<br> <strong>Pressure Notifications started</strong>";
-              characteristic.addEventListener(
-                "characteristicvaluechanged",
-                (event)=>{
-                let value = event.target.value;
-                values = value.getFloat32(0);
-                
-                // console.log("Pressure: "+values);
-                // console.log(value);
-
-              }
-              );
-    })
-
-      }
-
-      function logvalues(event){
-        let value = event.target.value;
-        values = value.getFloat32(0);
-        console.log(values);
-      }
-
-/*
-
-      function startnotify() {
-        navigator.bluetooth
-          .requestDevice({ filters: [{ services: [serviceUuid] }] })
-          .then((device) => {
-            ph.innerHTML = "<strong>Connecting to GATT Server...</strong>";
-            return device.gatt.connect();
-          })
-          .then((server) => {
-
-            ph.innerHTML = ph.innerHTML + "<br> <strong>Getting Service...</strong>";
-            return server.getPrimaryService(serviceUuid);
-          })
-          .then((service) => {
-
-            ph.innerHTML = ph.innerHTML + "<br> <strong>Getting Characteristic...</strong>";
-            return service.getCharacteristic(characteristicUuid);
-          })
-          .then((characteristic) => {
-            myCharacteristic = characteristic;
-            return myCharacteristic.startNotifications().then((_) => {
-              // console.log('> Notifications started');
-              ph.innerHTML = ph.innerHTML + "<br> <strong>Notifications started</strong>";
-              myCharacteristic.addEventListener(
-                "characteristicvaluechanged",
-                handleNotifications
-              );
-            });
-          })
-          .catch((error) => {
-            console.log("Argh! " + error);
-          });
-      }
-
-
-
-*/
-      function stopnotify() {
-        if (bird_char) {
-          bird_char
-            .stopNotifications()
-            .then((_) => {
-              ph.innerHTML = ph.innerHTML + "<br> <strong>Bird Notifications stopped</strong>";
-              bird_char.removeEventListener(
-                "characteristicvaluechanged",
-                handleNotifications
-              );
-            })
-            .catch((error) => {
-              log("Argh! " + error);
-            });
-        }
-
-        if (temp_char) {
-          temp_char
-            .stopNotifications()
-            .then((_) => {
-              // ph.innerHTML = ph.innerHTML + "<br> <strong>Temp Notifications stopped</strong>";
-              temp_char.removeEventListener(
-                "characteristicvaluechanged",
-                logvalues
-              );
-            })
-            .catch((error) => {
-              log("Argh! " + error);
-            });
-        }
-
-        if (hum_char) {
-          hum_char
-            .stopNotifications()
-            .then((_) => {
-              // ph.innerHTML = ph.innerHTML + "<br> <strong>Humidity Notifications stopped</strong>";
-              hum_char.removeEventListener(
-                "characteristicvaluechanged",
-                logvalues
-              );
-            })
-            .catch((error) => {
-              log("Argh! " + error);
-            });
-        }
-
-        if (press_char) {
-          press_char
-            .stopNotifications()
-            .then((_) => {
-              // ph.innerHTML = ph.innerHTML + "<br> <strong>Pressure Notifications stopped</strong>";
-              press_char.removeEventListener(
-                "characteristicvaluechanged",
-                logvalues
-              );
-            })
-            .catch((error) => {
-              log("Argh! " + error);
-            });
-        }
-
-      }
-
-      // document
-      //   .querySelector("form")
-      //   .addEventListener("submit", function (event) {
-      //     event.stopPropagation();
-      //     event.preventDefault();
-
-      //     if (isWebBluetoothEnabled()) {
-      //       getDeviceInfo();
-      //     }
-      //   });
-
-      function handleNotifications(event) {
-        let value = event.target.value;
-        console.log(value);
-        values = value.getUint8(0);
-        timestamps = new Date().toLocaleString();
-        time = new Date().toLocaleTimeString();
-        let bird = "";
-        if(values == 0){
-            bird="Fan Running Normally"
-        }else if(values==1){
-            bird="External Vibrations"
-        }else if(values==2){
-            bird = "Fan is OFF"
-        }
-        // if (values == 0) {
-        //   bird = "Noise";
-        //   data_json.push({'bird':bird, 'time':timestamps});
-        // } else if (values == 1) {
-        //   bird = "Laughing Kookaburra";
-        //   data_json.push({'bird':bird, 'time':timestamps});
-        // } else if (values == 2) {
-        //   bird = "Rose-ringed Parakeet";
-        //   data_json.push({'bird':bird, 'time':timestamps});
-        // } else if (values == 3) {
-        //   bird = "Square Tailed Drongo";
-        //   data_json.push({'bird':bird, 'time':timestamps});
-        // } else if (values == 4) {
-        //   bird = "Asian Koel";
-        //   data_json.push({'bird':bird, 'time':timestamps});
-        // } else if (values == 5) {
-        //   bird = "Greater Coucal";
-        //   data_json.push({'bird':bird, 'time':timestamps});
-        // } else if (values == 6) {
-        //   bird = "House Crow";
-        //   data_json.push({'bird':bird, 'time':timestamps});
-        // } else if (values == 7) {
-        //   bird = "Purple-rumped Sunbird";
-        //   data_json.push({'bird':bird, 'time':timestamps});
-        // } else if (values == 8) {
-        //   bird = "Red-whiskered Bulbul";
-        //   data_json.push({'bird':bird, 'time':timestamps});
-        // }
-
-        ph.innerHTML = ph.innerHTML + "<br> " + "-> " + time + " : " + bird;
-      }
-
-      function download() {
-        console.log(data_json);
-        downloadTextFile(JSON.stringify(data_json), "bird_log.json");
-      }
-
-      function downloadTextFile(text, name) {
-        const a = document.createElement("a");
-        const type = name.split(".").pop();
-        a.href = URL.createObjectURL(
-          new Blob([text], { type: `text/${type === "txt" ? "plain" : type}` })
+    
+      async function connect() {
+       bigButton.style.backgroundColor = "grey";
+       msg("requesting device ...");
+    
+       const device = await navigator.bluetooth.requestDevice({
+        filters: [
+         {
+          // acceptAllDevices:true
+          services: [SERVICE_UUID], // SERVICE_UUID
+         },
+        ],
+       });
+    
+       msg("connecting to device ...");
+       device.addEventListener("gattserverdisconnected", onDisconnected);
+       const server = await device.gatt.connect();
+    
+       msg("getting primary service ...");
+       const service = await server.getPrimaryService(SERVICE_UUID);
+    
+       // Set up the characteristics
+       for (const sensor of sensors) {
+        msg("characteristic " + sensor + "...");
+        BLEsense[sensor].characteristic = await service.getCharacteristic(
+         BLEsense[sensor].uuid
         );
-        a.download = name;
-        a.click();
+        // Set up notification
+        if (BLEsense[sensor].properties.includes("BLENotify")) {
+         BLEsense[sensor].characteristic.addEventListener(
+          "characteristicvaluechanged",
+          function (event) {
+           handleIncoming(BLEsense[sensor], event.target.value);
+          }
+         );
+         await BLEsense[sensor].characteristic.startNotifications();
+        }
+        // Set up polling for read
+        if (BLEsense[sensor].properties.includes("BLERead")) {
+         BLEsense[sensor].polling = setInterval(function () {
+          BLEsense[sensor].characteristic.readValue().then(function (data) {
+           handleIncoming(BLEsense[sensor], data);
+          });
+         }, 500);
+        }
+    
+        BLEsense[sensor].rendered = false;
+       }
+       bigButton.style.backgroundColor = "green";
+       msg("connected.");
+    
+       // initColorPicker();
       }
-    </script>
+    
+      function handleIncoming(sensor, dataReceived) {
+       const columns = Object.keys(sensor.data); // column headings for this sensor
+       //    console.log(sensor);
+       const typeMap = {
+        Uint8: { fn: DataView.prototype.getUint8, bytes: 1 },
+        Uint16: { fn: DataView.prototype.getUint16, bytes: 2 },
+        Float32: { fn: DataView.prototype.getFloat32, bytes: 4 },
+       };
+       var packetPointer = 0,
+        i = 0;
+    
+       // Read each sensor value in the BLE packet and push into the data array
+       sensor.structure.forEach(function (dataType) {
+        // Lookup function to extract data for given sensor property type
+        var dataViewFn = typeMap[dataType].fn.bind(dataReceived);
+        // Read sensor ouput value - true => Little Endian
+        var unpackedValue = dataViewFn(packetPointer, true);
+        // Push sensor reading onto data array
+        sensor.data[columns[i]].push(unpackedValue);
+        // Keep array at buffer size
+        if (sensor.data[columns[i]].length > maxRecords) {
+         sensor.data[columns[i]].shift();
+        }
+        // move pointer forward in data packet to next value
+        packetPointer += typeMap[dataType].bytes;
+        bytesReceived += typeMap[dataType].bytes;
+        i++;
+       });
+       sensor.rendered = false; // flag - vizualization needs to be updated
+      }
+    
+      function onDisconnected(event) {
+       let device = event.target;
+       bigButton.style.backgroundColor = "red";
+       // clear read polling
+       for (const sensor of sensors) {
+        if (typeof BLEsense[sensor].polling !== "undefined") {
+         clearInterval(BLEsense[sensor].polling);
+        }
+       }
+       // clear color picker write
+       const colorPickerElement = document.getElementById("color-picker-container");
+       colorPickerElement.removeChild(colorPickerElement.firstChild);
+    
+       msg("Device " + device.name + " is disconnected.");
+      }
+    
+      function BLEwriteTo(sensor) {
+       if (BLEsense[sensor].writeBusy) return; // dropping writes when one is in progress instead of queuing as LED is non-critical / realtime
+       BLEsense[sensor].writeBusy = true; // Ensure no write happens when GATT operation in progress
+       BLEsense[sensor].characteristic
+        .writeValue(BLEsense[sensor].writeValue)
+        .then((_) => {
+         BLEsense[sensor].writeBusy = false;
+        })
+        .catch((error) => {
+         console.log(error);
+        });
+      }
+    
+      function startTimer() {
+       tens++;
+    
+       if (tens <= 9) {
+        appendTens.innerHTML = "0" + tens;
+       }
+    
+       if (tens > 9) {
+        appendTens.innerHTML = tens;
+       }
+    
+       if (tens > 99) {
+        console.log("seconds");
+        seconds++;
+        appendSeconds.innerHTML = "0" + seconds;
+        tens = 0;
+        appendTens.innerHTML = "0" + 0;
+       }
+    
+       if (seconds > 9) {
+        appendSeconds.innerHTML = seconds;
+       }
+      }
+     </script>
     <script
       src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
       integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
