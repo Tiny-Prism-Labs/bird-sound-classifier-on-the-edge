@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <title>Web BLE Activity Tracking</title>
+  <link
+   href="https://fonts.googleapis.com/css?family=Roboto&display=swap"
+   rel="stylesheet"
+  />
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@jaames/iro/dist/iro.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/109/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/json-to-csv-export"></script>
+
+  <!-- <script src="GLTFLoader.js"></script> -->
+  <style>
+   body {
+    font-family: "Roboto", sans-serif;
+    color: #fff5f5;
+    background: #000000;
+    font-size: small;
+   }
+
+   #bigButton {
+    background-color: aqua;
+    border: none;
+    color: black;
+    padding: 1px;
+    text-align: center;
+    text-decoration: none;
+    font-size: 6px;
+    margin: 12px 20px;
+    height: 15px;
+    width: 30px;
+    border-radius: 10%;
+    outline: none;
+    font-family: "Roboto", sans-serif;
+   }
+
+   .container {
+    width: 960px;
+    height: 384px;
+    margin-top: 30px;
+    margin-bottom: 7.5px;
+    margin: 0 auto;
+   }
+
+   .widget {
+    background: #111111;
+    border: 1px solid #000000;
+    border-radius: 0px;
+    padding: 12px;
+    margin: 6px;
+    float: left;
+   }
+
+   .status {
+    background-image: url("logo.png");
+    background-size: 80px;
+    background-position: 98% 50%;
+    background-repeat: no-repeat;
+    width: 885px;
+    height: 42px;
+    color: white;
+   }
+
+   .square {
+    width: 192px;
+    height: 192px;
+    position: relative;
+   }
+
+   .label {
+    height: 15px;
+    display: inline;
+    font-size: 15px;
+   }
+
+   .digit {
+    font-size: 30px;
+    color: #888888;
+    float: right;
+   }
+
+   .short {
+    width: 192px;
+    height: 96px;
+   }
+   .double {
+    width: 900px;
+    height: 225px;
+   }
+   .graph {
+    width: 192px;
+    height: 177px;
+   }
+   .doublegraph {
+    width: 900px;
+    height: 225px;
+   }
+   .shortgraph {
+    width: 192px;
+    height: 81px;
+   }
+
+   #color-picker-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+   }
+
+   .start {
+    background-color: #021bd6;
+    color: white;
+    font-size: medium;
+    height: 30px;
+    width: 150px;
+    position: relative;
+    margin: 10px;
+   }
+   .center {
+    justify-content: center;
+    display: flex;
+    align-items: center;
+   }
+   .download {
+    background-color: #03be22;
+    color: white;
+    font-size: medium;
+    height: 30px;
+    width: 150px;
+    position: relative;
+    margin: 10px;
+   }
+   .stop {
+    background-color: #e20909;
+    color: white;
+    font-size: medium;
+    height: 30px;
+    width: 150px;
+    position: relative;
+    margin: 10px;
+   }
+   .stopwatch {
+    font-size: xx-large;
+    position: relative;
+   }
+
+   transition {
+    -webkit-transition: all 0.5s ease-in-out;
+    -moz-transition: all 0.5s ease-in-out;
+    transition: all 0.5s ease-in-out;
+   }
+
+   #seconds,
+   #tens {
+    font-size: 2em;
+   }
+  </style>
+ </head>
+ <body>
+  <div class="container">
+   <!-- <div class="label">&nbsp;&nbsp;IMPORTANT - first upload <a href="https://create.arduino.cc/editor/dpajak/e4128780-d76d-438f-97a4-541740cb0473/preview">sketch</a> to Arduino Nano 33 BLE Sense board<br></div> -->
+   <div class="status widget">
+    <button id="bigButton"></button>
+    <div class="label" id="bluetooth">Click button to connect to the board</div>
+   </div>
+
+   <!-- <div class="square widget" id="3d">
+      <div class="label">&#128230;3D</div>
+    </div> -->
+
+   <div class="double widget">
+    <div class="label">&#128640; Pressure</div>
+    <div id="accelerometer" class="doublegraph"></div>
+   </div>
+
+   <!-- <div class="double widget">
+    <div class="label">&#128171; Gyroscope</div>
+    <div id="gyroscope" class="doublegraph"></div>
+   </div>
+
+   <div class="double widget">
+    <div class="label">📈 ECG Data</div>
+    <div id="ecg" class="doublegraph"></div>
+   </div> -->
+
+   <!-- <div class=" graph center">
+    <h2>Stopwatch</h2>
+   </div> -->
+
+   <!-- <div class="doublegraph center">
+    <div>
+     <h2>Stopwatch</h2>
+    </div>
+    &nbsp; &nbsp; &nbsp;
+    <div>
+     <p class="stopwatch">
+      <span id="seconds">00</span>:<span id="tens">00</span>
+     </p>
+    </div>
+   </div> -->
+   <!-- <div class="doublegraph center">
+   
+    <button class="start" onclick="start_recording()">Start Recording</button>
+    <button class="stop" onclick="stop_recording()">Stop Recording</button>
+    <button class="download" onclick="download()">Download</button>
+   </div> -->
+  </div>
+ </body>
+ <script type="text/javascript">
+  /*
+  Demo showing simple dashboard of Arduino BLE sense
+
+  Based on: https://developers.google.com/web/updates/2015/07/interact-with-ble-devices-on-the-web
+  For earlier versions of Windows and Linux, you still have to go to chrome://flags/#enable-experimental-web-platform-features,
+  enable the highlighted flag, and restart Chrome for now.
+  */
+  //   import csvDownload from "json-to-csv-export";
+
+  var seconds = 0;
+  var tens = 0;
+  var appendTens = document.getElementById("tens");
+  var appendSeconds = document.getElementById("seconds");
+  var buttonStart = document.getElementById("button-start");
+  var buttonStop = document.getElementById("button-stop");
+  var buttonReset = document.getElementById("button-reset");
+  var Interval;
+
+  var maxRecords = 64;
+
+  var BLEsense = {
+   accelerometer: {
+    uuid: "6fbe1da7-2007-44de-92c4-bb6e04fb0212",
+    properties: ["BLENotify"],
+    structure: ["Float32", "Float32"],
+    data: { P1: [], P2: [] },
+   },
+//    gyroscope: {
+//     uuid: "6fbe1da7-3007-44de-92c4-bb6e04fb0212",
+//     properties: ["BLENotify"],
+//     structure: ["Float32", "Float32", "Float32"],
+//     data: { Gx: [], Gy: [], Gz: [] },
+//    },
+//    ecg: {
+//     uuid: "6fbe1da7-2a19-44de-92c4-bb6e04fb0212",
+//     properties: ["BLENotify"],
+//     structure: ["Float32"],
+//     data: { ecgData: [] },
+//    },
+  };
+
+  record_data = {
+   timestamp: [],
+   Ax: [],
+   Ay: [],
+   Az: [],
+   Gx: [],
+   Gy: [],
+   Gz: [],
+   ecgData: [],
+  };
+
+  const sensors = Object.keys(BLEsense);
+  // console.log(sensors);
+
+  const SERVICE_UUID = "6fbe1da7-0000-44de-92c4-bb6e04fb0212";
+  var bytesReceived = 0;
+  var bytesPrevious = 0;
+
+  // UI elements
+  const bigButton = document.getElementById("bigButton");
+  const BLEstatus = document.getElementById("bluetooth");
+
+  if ("bluetooth" in navigator) {
+   bigButton.addEventListener("click", function (event) {
+    // console.log(Object.keys(BLEsense[sensor].data));
+    connect();
+   });
+   // else the browser doesn't support bluetooth
+  } else {
+   msg("browser not supported");
+   bigButton.style.backgroundColor = "red";
+   alert(
+    "Error: This browser doesn't support Web Bluetooth. Try using Chrome."
+   );
+  }
+
+  function msg(m) {
+   BLEstatus.innerHTML = m;
+  }
+
+  async function connect() {
+   bigButton.style.backgroundColor = "grey";
+   msg("requesting device ...");
+
+   const device = await navigator.bluetooth.requestDevice({
+    filters: [
+     {
+      // acceptAllDevices:true
+      services: [SERVICE_UUID], // SERVICE_UUID
+     },
+    ],
+   });
+
+   msg("connecting to device ...");
+   device.addEventListener("gattserverdisconnected", onDisconnected);
+   const server = await device.gatt.connect();
+
+   msg("getting primary service ...");
+   const service = await server.getPrimaryService(SERVICE_UUID);
+
+   // Set up the characteristics
+   for (const sensor of sensors) {
+    // console.log("characteristic " + sensor + "...");
+
+    BLEsense[sensor].characteristic = await service.getCharacteristic(
+     BLEsense[sensor].uuid
+    );
+    // Set up notification
+    // console.log();
+
+    if (BLEsense[sensor].properties.includes("BLENotify")) {
+     BLEsense[sensor].characteristic.addEventListener(
+      "characteristicvaluechanged",
+      function (event) {
+       handleIncoming(BLEsense[sensor], event.target.value);
+      }
+     );
+     await BLEsense[sensor].characteristic.startNotifications();
+    }
+    // Set up polling for read
+    if (BLEsense[sensor].properties.includes("BLERead")) {
+     BLEsense[sensor].polling = setInterval(function () {
+      BLEsense[sensor].characteristic.readValue().then(function (data) {
+       // console.log(BLEsense[sensor]);
+
+       handleIncoming(BLEsense[sensor], data);
+      });
+     }, 500);
+    }
+
+    BLEsense[sensor].rendered = false;
+   }
+   bigButton.style.backgroundColor = "green";
+   msg("connected.");
+
+   // initColorPicker();
+  }
+  let ecgMaxValue = Number.MIN_VALUE; // Initialize with the smallest possible value
+  let ecgMinValue = Number.MAX_VALUE; // Initialize with the largest possible value
+
+  function handleIncoming(sensor, dataReceived) {
+   const columns = Object.keys(sensor.data); // column headings for this sensor
+   // console.log(sensor);
+   const typeMap = {
+    Uint8: { fn: DataView.prototype.getUint8, bytes: 1 },
+    Uint16: { fn: DataView.prototype.getUint16, bytes: 2 },
+    Float32: { fn: DataView.prototype.getFloat32, bytes: 4 },
+   };
+   var packetPointer = 0,
+    i = 0;
+
+   // Read each sensor value in the BLE packet and push into the data array
+   sensor.structure.forEach(function (dataType) {
+    // Lookup function to extract data for given sensor property type
+    var dataViewFn = typeMap[dataType].fn.bind(dataReceived);
+    // Read sensor ouput value - true => Little Endian
+    var unpackedValue = dataViewFn(packetPointer, true);
+    // Push sensor reading onto data array
+    sensor.data[columns[i]].push(unpackedValue);
+    // Keep array at buffer size
+    if (sensor.data[columns[i]].length > maxRecords) {
+     sensor.data[columns[i]].shift();
+    }
+    // move pointer forward in data packet to next value
+    packetPointer += typeMap[dataType].bytes;
+    bytesReceived += typeMap[dataType].bytes;
+    i++;
+   });
+
+   if (
+    sensor.uuid === "6fbe1da7-3003-44de-92c4-bb6e04fb0212"
+   ) {
+
+
+    //   const adcResolution = 1023;
+    //   const adcVoltage = 3.3;
+    //   // Use the provided max and min values
+    //   let ecgMaxValue = 750;
+    //   let ecgMinValue = 400;
+    //   // Calculate offset and scaling
+    //   let offset = (ecgMaxValue + ecgMinValue) / 2; // Midpoint of the range
+    //   let range = ecgMaxValue - ecgMinValue;
+    //   let scaling = 2 / range; // Adjust scaling to map to -1 to 1
+    //   // Apply offset and scaling
+      // for (let i = 0; i < sensor.data.ecgData.length; i++) {
+      //   sensor.data.ecgData[i] = map(sensor.data.ecgData[i],0,1023,0,10)
+      // }
+    //    let millivolts =
+    //     (sensor.data.ecgData[i] / adcResolution) * adcVoltage * 1000;
+    //    millivolts = (millivolts - offset) * scaling;
+    //    millivolts = Math.max(Math.min(millivolts, 1), -1);
+    //    sensor.data.ecgData[i] = millivolts;
+    //   }
+   }
+   //   // for (let i = 0; i < sensor.data.ecgData.length; i++) {
+   //   //   ecgMaxValue = Math.max(ecgMaxValue, sensor.data.ecgData[i]);
+   //   //   ecgMinValue = Math.min(ecgMinValue, sensor.data.ecgData[i]);
+
+   //   // }
+
+   //   // console.log("MAX is "+ ecgMaxValue+" and Min is "+ecgMinValue);
+
+   //   let ecgMaxValue = 697;
+   //   let ecgMinValue = 426;
+   //   // Check if it's the ECG sensor
+   //   let range = ecgMaxValue - ecgMinValue; // range = 271
+   //   for (let i = 0; i < sensor.data.ecgData.length; i++) {
+   //     sensor.data.ecgData[i] = ((sensor.data.ecgData[i] - ecgMinValue) / range) * 2 - 1; // Scale to -1 to 1
+   //   }
+   //   lethttps://www.udemy.com/course/microcontroller-embedded-c-programming/?couponCode=24T1MT11625 ecgData = sensor.data.ecgData;
+
+   //   // 1. Baseline Removal (Moving Average)
+   //   ecgData = baselineRemoval(ecgData, ecgData.length); // Adjust windowSize as needed
+
+   //   // 2. Noise Filtering (Low-pass Filter)
+   //   ecgData = lowPassFilter(ecgData, 0.02); // Adjust alpha as needed
+
+   //   // Update the sensor data with the processed ECG data
+   //   sensor.data.ecgData = ecgData;
+   //   // console.log(heartRate);
+   //  }
+
+   sensor.rendered = false; // flag - vizualization needs to be updated
+  }
+
+  function map(value, inMin, inMax, outMin, outMax) {
+   return ((value - inMin) * (outMax - outMin)) / (inMax - inMin) + outMin;
+  }
+
+  function onDisconnected(event) {
+   let device = event.target;
+   bigButton.style.backgroundColor = "red";
+   // clear read polling
+   for (const sensor of sensors) {
+    if (typeof BLEsense[sensor].polling !== "undefined") {
+     clearInterval(BLEsense[sensor].polling);
+    }
+   }
+   // clear color picker write
+   const colorPickerElement = document.getElementById("color-picker-container");
+   colorPickerElement.removeChild(colorPickerElement.firstChild);
+
+   msg("Device " + device.name + " is disconnected.");
+  }
+
+  function BLEwriteTo(sensor) {
+   if (BLEsense[sensor].writeBusy) return; // dropping writes when one is in progress instead of queuing as LED is non-critical / realtime
+   BLEsense[sensor].writeBusy = true; // Ensure no write happens when GATT operation in progress
+   BLEsense[sensor].characteristic
+    .writeValue(BLEsense[sensor].writeValue)
+    .then((_) => {
+     BLEsense[sensor].writeBusy = false;
+    })
+    .catch((error) => {
+     console.log(error);
+    });
+  }
+
+  function startTimer() {
+   tens++;
+
+   if (tens <= 9) {
+    appendTens.innerHTML = "0" + tens;
+   }
+
+   if (tens > 9) {
+    appendTens.innerHTML = tens;
+   }
+
+   if (tens > 99) {
+    console.log("seconds");
+    seconds++;
+    appendSeconds.innerHTML = "0" + seconds;
+    tens = 0;
+    appendTens.innerHTML = "0" + 0;
+   }
+
+   if (seconds > 9) {
+    appendSeconds.innerHTML = seconds;
+   }
+  }
+
+  function baselineRemoval(ecgData, windowSize) {
+   let filteredData = [];
+   for (let i = 0; i < ecgData.length; i++) {
+    let sum = 0;
+    for (let j = i - windowSize; j <= i; j++) {
+     if (j >= 0) {
+      sum += ecgData[j];
+     }
+    }
+    filteredData.push(ecgData[i] - sum / (windowSize + 1));
+   }
+   return filteredData;
+  }
+
+  function lowPassFilter(ecgData, alpha) {
+   let filteredData = [ecgData[0]]; // Initialize with the first value
+   for (let i = 1; i < ecgData.length; i++) {
+    filteredData[i] = alpha * ecgData[i] + (1 - alpha) * filteredData[i - 1];
+   }
+   return filteredData;
+  }
+ </script>
+ <script>
+  function initColorPicker() {
+   BLEsense.led.colorPicker = new iro.ColorPicker("#color-picker-container", {
+    width: 150,
+    color: "rgb(255, 0, 0)",
+    borderWidth: 1,
+    borderColor: "#fff",
+    sliderHeight: 6,
+    sliderMargin: 6,
+   });
+   // RGB Color Picker
+   BLEsense.led.colorPicker.on("color:change", updateModelLed);
+   function updateModelLed(color) {
+    ledLight.color.setHex("0x" + color.hexString.substring(1, 7));
+    ledMaterial.color.set(color.hexString); // where r, g, and b are 0 to 1
+    var rgb_values = Uint8Array.of(color.rgb.r, color.rgb.g, color.rgb.b);
+    BLEsense["led"].writeValue = rgb_values;
+    BLEwriteTo("led");
+   }
+  }
+
+  // Graphing
+  const colors = [
+   "#FF355E",
+   "#FD5B20",
+   "#FF6037",
+   "#FF9966",
+   "#FF9933",
+   "#FFCC33",
+   "#FFFF66",
+   "#FFFF66",
+   "#CCFF00",
+   "#66FF66",
+   //  "#AAF0D1",
+   //  "#50BFE6",
+   //  "#FF6EFF",
+   //  "#EE34D2",
+   // "#FF00CC",
+   // "#FF00CC",
+  ];
+  var colorIndex = 0;
+  function initGraph(sensor) {
+   var title = sensor;
+   var series = Object.keys(BLEsense[sensor].data);
+   var format = [];
+   series.forEach(function (item) {
+    colorIndex++;
+    if (colorIndex > colors.length) {
+     colorIndex = 0;
+    }
+    format.push({
+     y: [],
+     name: item,
+     mode: "lines",
+     width: 1,
+     line: { width: 1, color: colors[colorIndex] },
+    });
+   });
+   if (sensor === "ecg") {
+    Plotly.plot(title, format, {
+     plot_bgcolor: "#111111",
+     paper_bgcolor: "#111111",
+     margin: { l: 8, r: 8, b: 18, t: 18 },
+     showlegend: true,
+     yaxis: { showticklabels: true, yAxisRange: [0, 1023], autorange: true },
+     xaxis: {
+      range: [0, maxRecords],
+      showticklabels: false,
+      autorange: true,
+      showgrid: true,
+      zeroline: true,
+      tickfont: { size: 10 },
+     },
+    });
+   } else {
+    Plotly.plot(title, format, {
+     plot_bgcolor: "#111111",
+     paper_bgcolor: "#111111",
+     margin: { l: 8, r: 8, b: 18, t: 18 },
+     showlegend: true,
+     yaxis: { showticklabels: true },
+     xaxis: {
+      range: [0, maxRecords],
+      showticklabels: false,
+      autorange: true,
+      showgrid: true,
+      zeroline: true,
+      tickfont: { size: 10 },
+     },
+    });
+   }
+  }
+
+  var flag = 0,
+   timestamp_count = 0;
+  function graph(sensor) {
+   var labels = Object.keys(BLEsense[sensor].data);
+   var values = [];
+   //    console.log(labels[0]);
+   // after
+   labels.forEach(function (label) {
+    values.push(BLEsense[sensor].data[label]);
+    // if()
+   });
+   Plotly.restyle(sensor, { y: values });
+  }
+
+  function digit(sensor) {
+   const value = BLEsense[sensor].data[sensor].latest();
+   const div = document.getElementById(sensor + "-value");
+   if (!Number.isNaN(value)) {
+    div.innerHTML = Math.round(value * 10) / 10;
+   }
+  }
+  var download_flag = 0;
+  function start_recording() {
+   flag = 1;
+   record_data.timestamp = [];
+   record_data.Ax = [];
+   record_data.Ay = [];
+   record_data.Az = [];
+   record_data.Gx = [];
+   record_data.Gy = [];
+   record_data.Gz = [];
+   record_data.ecgData = [];
+   console.log("pressed");
+   timestamp_count = 0;
+   clearInterval(Interval);
+   Interval = setInterval(startTimer, 10);
+  }
+  function stop_recording() {
+   flag = 0;
+   console.log("pressed");
+   console.log(record_data);
+   download_flag = 1;
+   clearInterval(Interval);
+  }
+
+  const download_file = function (data) {
+   // Creating a Blob for having a csv file format
+   // and passing the data with type
+   const blob = new Blob([data], { type: "text/csv" });
+
+   // Creating an object for downloading url
+   const url = window.URL.createObjectURL(blob);
+
+   // Creating an anchor(a) tag of HTML
+   const a = document.createElement("a");
+
+   // Passing the blob downloading url
+   a.setAttribute("href", url);
+
+   // Setting the anchor tag attribute for downloading
+   // and passing the download file name
+   a.setAttribute("download", "download.csv");
+
+   // Performing a download with click
+   a.click();
+  };
+
+  const csvmaker = function (data) {
+   // Empty array for storing the values
+   csvRows = [];
+
+   // Headers is basically a keys of an object
+   // which is id, name, and profession
+   const headers = Object.keys(data);
+   console.log(headers);
+   // As for making csv format, headers must
+   // be separated by comma and pushing it
+   // into array
+   csvRows.push(headers.join(","));
+   // console.log(csvRows);
+   // Pushing Object values into array
+   // with comma separation
+   //    const values =
+   for (let index = 0; index < data.timestamp.length; index++) {
+    let store_temp = [
+     data.timestamp[index],
+     data.X[index],
+     data.Y[index],
+     data.Z[index],
+    ];
+    csvRows.push(store_temp);
+    // const time = data.X[index];
+    // console.log(element);
+   }
+   // data.forEach(element => {
+   //     console.log(element);
+   // });
+   //    const values = Object.values(data).join(",");
+   //    csvRows.push(values);
+   console.log(csvRows);
+   // Returning the array joining with new line
+   return csvRows.join("\n");
+  };
+
+  function download() {
+   if (flag == 0 && download_flag == 1) {
+    clearInterval(Interval);
+    tens = "00";
+    seconds = "00";
+    appendTens.innerHTML = tens;
+    appendSeconds.innerHTML = seconds;
+    const csvdata = csvmaker(record_data);
+    // console.log(csvdata);
+    download_file(csvdata);
+   }
+  }
+  //   function update3d(sensor){
+  //     var Ax = BLEsense['accelerometer'].data.Ax.latest() * 0.0174533;
+  //     var Ay = BLEsense['accelerometer'].data.Ay.latest() * 0.0174533;
+  //     var Az = BLEsense['accelerometer'].data.Az.latest() * 0.0174533;
+  //     var pitch = Math.atan2((-Ax) , Math.sqrt(Ay * Ay + Az * Az));
+  //     var roll = Math.atan2(Ay , Az);
+  //     arduinoModel.rotation.x = roll;
+  //     arduinoModel.rotation.y = pitch;
+  //     arduinoModel.rotation.z = 0;
+  //     renderer.render(scene, camera);
+  //   }
+
+  function bytes() {
+   if (bytesReceived > bytesPrevious) {
+    bytesPrevious = bytesReceived;
+    msg(bytesReceived + " bytes received");
+   }
+  }
+
+  function write_to_file(sensor) {
+   if (flag == 1) {
+    // console.log(sensor);
+    // BLEsense[sensor].data[label]
+    // console.log(
+    //  BLEsense[sensor].data["Ax"],
+    //  BLEsense[sensor].data["Ay"],
+    //  BLEsense[sensor].data["Az"]
+    // );
+    // let json_data_file = {
+    //     "timestamp":timestamp_count,
+    //     "X":BLEsense[sensor].data["Ax"],
+    //     "Y":BLEsense[sensor].data["Ay"],
+    //     "Z":BLEsense[sensor].data["Az"]
+    // }
+    // record_data.push(json_data_file)
+    record_data.timestamp.push(timestamp_count);
+    record_data.X.push(BLEsense[sensor].data["Ax"][63]);
+    record_data.Y.push(BLEsense[sensor].data["Ay"][63]);
+    record_data.Z.push(BLEsense[sensor].data["Az"][63]);
+    timestamp_count += 1000 / 30;
+   }
+  }
+
+  var skip_frame = false;
+  function draw() {
+   function updateViz(sensor, fns) {
+    if (BLEsense[sensor].rendered == false) {
+     // only render if new values are received
+     fns.forEach(function (fn) {
+      fn(sensor);
+     });
+     BLEsense[sensor].rendered = true;
+    }
+   }
+   if (skip_frame == false) {
+    // TODO update with fuction to iterate object with viz function as a property
+    //   updateViz('colorimeter', [colorBars]);
+    //   updateViz('microphone', [spectrumAnalyser]);
+    // updateViz("gyroscope", [graph]);
+    updateViz("accelerometer", [graph, write_to_file]);
+    // updateViz("ecg", [graph]);
+    //   updateViz('temperature', [graph,digit]);
+    //   updateViz('humidity', [graph,digit]);
+    //   updateViz('pressure', [graph,digit]);
+    //   bytes();
+
+    skip_frame = true; // render alternate frames = 30fps
+   } else {
+    skip_frame = false;
+   }
+   requestAnimationFrame(draw);
+  }
+
+  initGraph("accelerometer");
+//   initGraph("gyroscope");
+//   initGraph("ecg");
+  //   initGraph('humidity');
+  //   initGraph('pressure');
+  //   initSpectrum();
+  //   init3D();
+  requestAnimationFrame(draw);
+ </script>
+</html>
