@@ -1,682 +1,390 @@
-<!DOCTYPE html>
-<html>
- <head>
-  <title>Web BLE Activity Tracking</title>
-  <link
-   href="https://fonts.googleapis.com/css?family=Roboto&display=swap"
-   rel="stylesheet"
-  />
-  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@jaames/iro/dist/iro.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/109/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/json-to-csv-export"></script>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>BLE IMU Dashboard (single file)</title>
 
-  <!-- <script src="GLTFLoader.js"></script> -->
+  <!-- Tailwind for quick styling -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Plotly (modern explicit version) -->
+  <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+  <!-- Vue 3 global -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+
   <style>
-   body {
-    font-family: "Roboto", sans-serif;
-    color: #fff5f5;
-    background: #000000;
-    font-size: small;
-   }
-
-   #bigButton {
-    background-color: aqua;
-    border: none;
-    color: black;
-    padding: 1px;
-    text-align: center;
-    text-decoration: none;
-    font-size: 6px;
-    margin: 12px 20px;
-    height: 15px;
-    width: 30px;
-    border-radius: 10%;
-    outline: none;
-    font-family: "Roboto", sans-serif;
-   }
-
-   .container {
-    width: 960px;
-    height: 384px;
-    margin-top: 30px;
-    margin-bottom: 7.5px;
-    margin: 0 auto;
-   }
-
-   .widget {
-    background: #111111;
-    border: 1px solid #000000;
-    border-radius: 0px;
-    padding: 12px;
-    margin: 6px;
-    float: left;
-   }
-
-   .status {
-    background-image: url("logo.png");
-    background-size: 80px;
-    background-position: 98% 50%;
-    background-repeat: no-repeat;
-    width: 885px;
-    height: 42px;
-    color: white;
-   }
-
-   .square {
-    width: 192px;
-    height: 192px;
-    position: relative;
-   }
-
-   .label {
-    height: 15px;
-    display: inline;
-    font-size: 15px;
-   }
-
-   .digit {
-    font-size: 30px;
-    color: #888888;
-    float: right;
-   }
-
-   .short {
-    width: 192px;
-    height: 96px;
-   }
-   .double {
-    width: 900px;
-    height: 225px;
-   }
-   .graph {
-    width: 192px;
-    height: 177px;
-   }
-   .doublegraph {
-    width: 900px;
-    height: 225px;
-   }
-   .shortgraph {
-    width: 192px;
-    height: 81px;
-   }
-
-   #color-picker-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-   }
-
-   .start {
-    background-color: #021bd6;
-    color: white;
-    font-size: medium;
-    height: 30px;
-    width: 150px;
-    position: relative;
-    margin: 10px;
-   }
-   .center {
-    justify-content: center;
-    display: flex;
-    align-items: center;
-   }
-   .download {
-    background-color: #03be22;
-    color: white;
-    font-size: medium;
-    height: 30px;
-    width: 150px;
-    position: relative;
-    margin: 10px;
-   }
-   .stop {
-    background-color: #e20909;
-    color: white;
-    font-size: medium;
-    height: 30px;
-    width: 150px;
-    position: relative;
-    margin: 10px;
-   }
-   .stopwatch {
-    font-size: xx-large;
-    position: relative;
-   }
-
-   transition {
-    -webkit-transition: all 0.5s ease-in-out;
-    -moz-transition: all 0.5s ease-in-out;
-    transition: all 0.5s ease-in-out;
-   }
-
-   #seconds,
-   #tens {
-    font-size: 2em;
-   }
+    body { background:#0b1220; color:#e6eef8; font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; }
+    .card { background: #0f1724; border-radius: 12px; padding: 18px; box-shadow: 0 8px 30px rgba(2,6,23,0.6); }
+    .sidebar-card { background: #0b1220; border-radius: 10px; padding: 16px; }
+    button.primary { background: linear-gradient(90deg,#2563eb,#7c3aed); color:#fff; padding:8px 14px; border-radius:8px; border:0; }
+    button.danger { background:#ef4444; color:#fff; padding:8px 14px; border-radius:8px; border:0; }
+    .small-muted { color:#9ca3af; font-size:0.9rem; }
   </style>
- </head>
- <body>
-  <div class="container">
-   <!-- <div class="label">&nbsp;&nbsp;IMPORTANT - first upload <a href="https://create.arduino.cc/editor/dpajak/e4128780-d76d-438f-97a4-541740cb0473/preview">sketch</a> to Arduino Nano 33 BLE Sense board<br></div> -->
-   <div class="status widget">
-    <button id="bigButton"></button>
-    <div class="label" id="bluetooth">Click button to connect to the board</div>
-   </div>
+</head>
+<body>
+  <div id="app" class="min-h-screen flex">
+    <!-- Sidebar -->
+    <aside class="w-72 p-6">
+      <div class="sidebar-card">
+        <h2 class="text-lg font-semibold mb-4">IMU Controller</h2>
 
-   <!-- <div class="square widget" id="3d">
-      <div class="label">&#128230;3D</div>
-    </div> -->
+        <div class="space-y-3">
+          <button @click="toggleConnection" :class="['w-full', 'rounded-md', 'text-white', bleConnected ? 'bg-red-600 hover:bg-red-700' : 'bg-sky-600 hover:bg-sky-700']">
+            {{ bleConnected ? 'Disconnect BLE' : 'Connect BLE' }}
+          </button>
 
-   <div class="double widget">
-    <div class="label">&#128640; Accelerometer</div>
-    <div id="accelerometer" class="doublegraph"></div>
-   </div>
+          <div class="grid grid-cols-1 gap-2 mt-2">
+            <button @click="startRecording" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-md">Start Recording</button>
+            <button @click="stopRecording" class="w-full bg-amber-600 hover:bg-amber-700 text-white py-2 rounded-md">Stop Recording</button>
+            <button @click="downloadCSV" class="w-full bg-gray-700 hover:bg-gray-600 text-white py-2 rounded-md">Download CSV</button>
+          </div>
 
-   <div class="double widget">
-    <div class="label">&#128171; Gyroscope</div>
-    <div id="gyroscope" class="doublegraph"></div>
-   </div>
+          <div class="mt-4 small-muted">
+            <div>Stopwatch</div>
+            <div class="font-mono mt-2 text-lg">{{ formattedTime }}</div>
+          </div>
 
-   <!-- <div class=" graph center">
-    <h2>Stopwatch</h2>
-   </div> -->
+          <div class="mt-4 small-muted">
+            <div>Status: <span :class="bleConnected ? 'text-green-400' : 'text-yellow-300'">{{ bleConnected ? 'Connected' : (connecting ? 'Connecting...' : 'Disconnected') }}</span></div>
+          </div>
+        </div>
+      </div>
+    </aside>
 
-   <div class="doublegraph center">
-    <div>
-     <h2>Stopwatch</h2>
-    </div>
-    &nbsp; &nbsp; &nbsp;
-    <div>
-     <p class="stopwatch">
-      <span id="seconds">00</span>:<span id="tens">00</span>
-     </p>
-    </div>
-   </div>
-   <div class="doublegraph center">
-    <!-- <input class="label" type="text"> -->
-    <button class="start" onclick="start_recording()">Start Recording</button>
-    <button class="stop" onclick="stop_recording()">Stop Recording</button>
-    <button class="download" onclick="download()">Download</button>
-   </div>
+    <!-- Main -->
+    <main class="flex-1 p-6">
+      <h1 class="text-2xl font-semibold mb-4">IMU Live — Accelerometer & Gyroscope</h1>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <section class="card">
+          <h3 class="text-lg font-medium mb-2">Accelerometer</h3>
+          <div id="accelerometer" style="width:100%;height:360px;"></div>
+        </section>
+
+        <section class="card">
+          <h3 class="text-lg font-medium mb-2">Gyroscope</h3>
+          <div id="gyroscope" style="width:100%;height:360px;"></div>
+        </section>
+      </div>
+    </main>
   </div>
- </body>
- <script type="text/javascript">
-  /*
-Demo showing simple dashboard of Arduino BLE sense
 
-Based on: https://developers.google.com/web/updates/2015/07/interact-with-ble-devices-on-the-web
-For earlier versions of Windows and Linux, you still have to go to chrome://flags/#enable-experimental-web-platform-features,
-enable the highlighted flag, and restart Chrome for now.
+<script>
+/*
+ Single-file BLE+Plotly+CSV dashboard.
+
+ - Connects to XiaoMultiSense (filters by name).
+ - Uses the service and char UUIDs you provided.
+ - Updates Plotly efficiently using extendTraces (rolling window MAX_POINTS).
+ - Records CSV rows into recordedRows[] while recording is ON.
+ - CSV rows are full, valid lines (ISO timestamp + numeric values formatted).
 */
-  //   import csvDownload from "json-to-csv-export";
 
-  var seconds = 0;
-  var tens = 0;
-  var appendTens = document.getElementById("tens");
-  var appendSeconds = document.getElementById("seconds");
-  var buttonStart = document.getElementById("button-start");
-  var buttonStop = document.getElementById("button-stop");
-  var buttonReset = document.getElementById("button-reset");
-  var Interval;
+const SERVICE_UUID = '6fbe1da7-0000-44de-92c4-bb6e04fb0212';
+const ACCEL_UUID   = '6fbe1da7-3001-44de-92c4-bb6e04fb0212';
+const GYRO_UUID    = '6fbe1da7-3002-44de-92c4-bb6e04fb0212';
 
-  var maxRecords = 64;
+const { createApp } = Vue;
 
-  var BLEsense = {
-   accelerometer: {
-    uuid: "6fbe1da7-3001-44de-92c4-bb6e04fb0212",
-    properties: ["BLENotify"],
-    structure: ["Float32", "Float32", "Float32"],
-    data: { Ax: [], Ay: [], Az: [] },
-   },
-   gyroscope: {
-    uuid: "6fbe1da7-3002-44de-92c4-bb6e04fb0212",
-    properties: ["BLENotify"],
-    structure: ["Float32", "Float32", "Float32"],
-    data: { Gx: [], Gy: [], Gz: [] },
-   },
-  };
+createApp({
+  data() {
+    return {
+      // BLE state
+      bleConnected: false,
+      connecting: false,
+      device: null,
+      server: null,
+      accelChar: null,
+      gyroChar: null,
+      // bound event handlers (store function refs so we can remove)
+      _onAccel: null,
+      _onGyro: null,
 
-  record_data = {
-   timestamp: [],
-   X: [],
-   Y: [],
-   Z: [],
-  };
+      // plotting
+      MAX_POINTS: 64,
 
-  const sensors = Object.keys(BLEsense);
-  const SERVICE_UUID = "6fbe1da7-0000-44de-92c4-bb6e04fb0212";
-  var bytesReceived = 0;
-  var bytesPrevious = 0;
+      // recording
+      recording: false,
+      recordedRows: [],
 
-  // UI elements
-  const bigButton = document.getElementById("bigButton");
-  const BLEstatus = document.getElementById("bluetooth");
+      // latest samples (used to make combined CSV rows)
+      latestAccel: null,
+      latestGyro: null,
 
-  if ("bluetooth" in navigator) {
-   bigButton.addEventListener("click", function (event) {
-    // console.log(Object.keys(BLEsense[sensor].data));
-    connect();
-   });
-   // else the browser doesn't support bluetooth
-  } else {
-   msg("browser not supported");
-   bigButton.style.backgroundColor = "red";
-   alert(
-    "Error: This browser doesn't support Web Bluetooth. Try using Chrome."
-   );
-  }
+      // stopwatch
+      stopwatchStart: 0,
+      stopwatchMs: 0,
+      stopwatchTimer: null
+    };
+  },
 
-  function msg(m) {
-   BLEstatus.innerHTML = m;
-  }
-
-  async function connect() {
-   bigButton.style.backgroundColor = "grey";
-   msg("requesting device ...");
-
-   const device = await navigator.bluetooth.requestDevice({
-    filters: [
-     {
-      // acceptAllDevices:true
-      services: [SERVICE_UUID], // SERVICE_UUID
-     },
-    ],
-   });
-
-   msg("connecting to device ...");
-   device.addEventListener("gattserverdisconnected", onDisconnected);
-   const server = await device.gatt.connect();
-
-   msg("getting primary service ...");
-   const service = await server.getPrimaryService(SERVICE_UUID);
-
-   // Set up the characteristics
-   for (const sensor of sensors) {
-    msg("characteristic " + sensor + "...");
-    BLEsense[sensor].characteristic = await service.getCharacteristic(
-     BLEsense[sensor].uuid
-    );
-    // Set up notification
-    if (BLEsense[sensor].properties.includes("BLENotify")) {
-     BLEsense[sensor].characteristic.addEventListener(
-      "characteristicvaluechanged",
-      function (event) {
-       handleIncoming(BLEsense[sensor], event.target.value);
-      }
-     );
-     await BLEsense[sensor].characteristic.startNotifications();
+  computed: {
+    formattedTime() {
+      const ms = this.stopwatchMs % 1000;
+      const totalSeconds = Math.floor(this.stopwatchMs / 1000);
+      const s = totalSeconds % 60;
+      const m = Math.floor(totalSeconds / 60);
+      return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}.${String(Math.floor(ms/10)).padStart(2,'0')}`;
     }
-    // Set up polling for read
-    if (BLEsense[sensor].properties.includes("BLERead")) {
-     BLEsense[sensor].polling = setInterval(function () {
-      BLEsense[sensor].characteristic.readValue().then(function (data) {
-       handleIncoming(BLEsense[sensor], data);
-      });
-     }, 500);
-    }
+  },
 
-    BLEsense[sensor].rendered = false;
-   }
-   bigButton.style.backgroundColor = "green";
-   msg("connected.");
+  mounted() {
+    // init Plotly charts with three traces each (X,Y,Z)
+    const commonLayout = {
+      margin: { t: 20, r: 30, l: 60, b: 40 },
+      paper_bgcolor: '#0b1220',
+      plot_bgcolor: '#0b1220',
+      font: { color: '#d1d5db' },
+      legend: { orientation: 'h', x: 0.01, y: 1.08 }
+    };
 
-   // initColorPicker();
-  }
-
-  function handleIncoming(sensor, dataReceived) {
-   const columns = Object.keys(sensor.data); // column headings for this sensor
-   //    console.log(sensor);
-   const typeMap = {
-    Uint8: { fn: DataView.prototype.getUint8, bytes: 1 },
-    Uint16: { fn: DataView.prototype.getUint16, bytes: 2 },
-    Float32: { fn: DataView.prototype.getFloat32, bytes: 4 },
-   };
-   var packetPointer = 0,
-    i = 0;
-
-   // Read each sensor value in the BLE packet and push into the data array
-   sensor.structure.forEach(function (dataType) {
-    // Lookup function to extract data for given sensor property type
-    var dataViewFn = typeMap[dataType].fn.bind(dataReceived);
-    // Read sensor ouput value - true => Little Endian
-    var unpackedValue = dataViewFn(packetPointer, true);
-    // Push sensor reading onto data array
-    sensor.data[columns[i]].push(unpackedValue);
-    // Keep array at buffer size
-    if (sensor.data[columns[i]].length > maxRecords) {
-     sensor.data[columns[i]].shift();
-    }
-    // move pointer forward in data packet to next value
-    packetPointer += typeMap[dataType].bytes;
-    bytesReceived += typeMap[dataType].bytes;
-    i++;
-   });
-   sensor.rendered = false; // flag - vizualization needs to be updated
-  }
-
-  function onDisconnected(event) {
-   let device = event.target;
-   bigButton.style.backgroundColor = "red";
-   // clear read polling
-   for (const sensor of sensors) {
-    if (typeof BLEsense[sensor].polling !== "undefined") {
-     clearInterval(BLEsense[sensor].polling);
-    }
-   }
-   // clear color picker write
-   const colorPickerElement = document.getElementById("color-picker-container");
-   colorPickerElement.removeChild(colorPickerElement.firstChild);
-
-   msg("Device " + device.name + " is disconnected.");
-  }
-
-  function BLEwriteTo(sensor) {
-   if (BLEsense[sensor].writeBusy) return; // dropping writes when one is in progress instead of queuing as LED is non-critical / realtime
-   BLEsense[sensor].writeBusy = true; // Ensure no write happens when GATT operation in progress
-   BLEsense[sensor].characteristic
-    .writeValue(BLEsense[sensor].writeValue)
-    .then((_) => {
-     BLEsense[sensor].writeBusy = false;
-    })
-    .catch((error) => {
-     console.log(error);
-    });
-  }
-
-  function startTimer() {
-   tens++;
-
-   if (tens <= 9) {
-    appendTens.innerHTML = "0" + tens;
-   }
-
-   if (tens > 9) {
-    appendTens.innerHTML = tens;
-   }
-
-   if (tens > 99) {
-    console.log("seconds");
-    seconds++;
-    appendSeconds.innerHTML = "0" + seconds;
-    tens = 0;
-    appendTens.innerHTML = "0" + 0;
-   }
-
-   if (seconds > 9) {
-    appendSeconds.innerHTML = seconds;
-   }
-  }
- </script>
- <script>
-  function initColorPicker() {
-   BLEsense.led.colorPicker = new iro.ColorPicker("#color-picker-container", {
-    width: 150,
-    color: "rgb(255, 0, 0)",
-    borderWidth: 1,
-    borderColor: "#fff",
-    sliderHeight: 6,
-    sliderMargin: 6,
-   });
-   // RGB Color Picker
-   BLEsense.led.colorPicker.on("color:change", updateModelLed);
-   function updateModelLed(color) {
-    ledLight.color.setHex("0x" + color.hexString.substring(1, 7));
-    ledMaterial.color.set(color.hexString); // where r, g, and b are 0 to 1
-    var rgb_values = Uint8Array.of(color.rgb.r, color.rgb.g, color.rgb.b);
-    BLEsense["led"].writeValue = rgb_values;
-    BLEwriteTo("led");
-   }
-  }
-
-  // Graphing
-  const colors = [
-   "#FF355E",
-   "#FD5B20",
-   "#FF6037",
-   "#FF9966",
-   "#FF9933",
-   "#FFCC33",
-   "#FFFF66",
-   "#FFFF66",
-  //  "#CCFF00",
-  //  "#66FF66",
-  //  "#AAF0D1",
-  //  "#50BFE6",
-  //  "#FF6EFF",
-  //  "#EE34D2",
-  // "#FF00CC",
-  // "#FF00CC",
-  ];
-  var colorIndex = 0;
-  function initGraph(sensor) {
-   var title = sensor;
-   var series = Object.keys(BLEsense[sensor].data);
-   var format = [];
-   series.forEach(function (item) {
-    colorIndex++;
-    if (colorIndex > colors.length) {
-     colorIndex = 0;
-    }
-    format.push({
-     y: [],
-     name: item,
-     mode: "lines",
-     width: 1,
-     line: { width: 1, color: colors[colorIndex] },
-    });
-   });
-
-   Plotly.plot(title, format, {
-    plot_bgcolor: "#111111",
-    paper_bgcolor: "#111111",
-    margin: { l: 8, r: 8, b: 18, t: 18 },
-    showlegend: true,
-    yaxis: { showticklabels: true },
-    xaxis: {
-     range: [0, maxRecords],
-     showticklabels: false,
-     autorange: false,
-     showgrid: true,
-     zeroline: true,
-     tickfont: { size: 10 },
-    },
-   });
-  }
-
-  var flag = 0,
-   timestamp_count = 0;
-  function graph(sensor) {
-   var labels = Object.keys(BLEsense[sensor].data);
-   var values = [];
-   //    console.log(labels[0]);
-   // after
-   labels.forEach(function (label) {
-    values.push(BLEsense[sensor].data[label]);
-    // if()
-   });
-   Plotly.restyle(sensor, { y: values });
-  }
-
-  function digit(sensor) {
-   const value = BLEsense[sensor].data[sensor].latest();
-   const div = document.getElementById(sensor + "-value");
-   if (!Number.isNaN(value)) {
-    div.innerHTML = Math.round(value * 10) / 10;
-   }
-  }
-  var download_flag = 0;
-  function start_recording() {
-   flag = 1;
-   record_data.timestamp = [];
-   record_data.X = [];
-   record_data.Y = [];
-   record_data.Z = [];
-   console.log("pressed");
-   timestamp_count = 0;
-   clearInterval(Interval);
-   Interval = setInterval(startTimer, 10);
-  }
-  function stop_recording() {
-   flag = 0;
-   console.log("pressed");
-   console.log(record_data);
-   download_flag = 1;
-   clearInterval(Interval);
-  }
-
-  const download_file = function (data) {
-   // Creating a Blob for having a csv file format
-   // and passing the data with type
-   const blob = new Blob([data], { type: "text/csv" });
-
-   // Creating an object for downloading url
-   const url = window.URL.createObjectURL(blob);
-
-   // Creating an anchor(a) tag of HTML
-   const a = document.createElement("a");
-
-   // Passing the blob downloading url
-   a.setAttribute("href", url);
-
-   // Setting the anchor tag attribute for downloading
-   // and passing the download file name
-   a.setAttribute("download", "download.csv");
-
-   // Performing a download with click
-   a.click();
-  };
-
-  const csvmaker = function (data) {
-   // Empty array for storing the values
-   csvRows = [];
-
-   // Headers is basically a keys of an object
-   // which is id, name, and profession
-   const headers = Object.keys(data);
-   console.log(headers);
-   // As for making csv format, headers must
-   // be separated by comma and pushing it
-   // into array
-   csvRows.push(headers.join(","));
-   // console.log(csvRows);
-   // Pushing Object values into array
-   // with comma separation
-   //    const values =
-   for (let index = 0; index < data.timestamp.length; index++) {
-    let store_temp = [
-     data.timestamp[index],
-     data.X[index],
-     data.Y[index],
-     data.Z[index],
+    const accelTraces = [
+      { x: [], y: [], mode: 'lines', name: 'X', line: { color: '#ff6384', width: 2 } },
+      { x: [], y: [], mode: 'lines', name: 'Y', line: { color: '#36a2eb', width: 2 } },
+      { x: [], y: [], mode: 'lines', name: 'Z', line: { color: '#4bc0c0', width: 2 } },
     ];
-    csvRows.push(store_temp);
-    // const time = data.X[index];
-    // console.log(element);
-   }
-   // data.forEach(element => {
-   //     console.log(element);
-   // });
-   //    const values = Object.values(data).join(",");
-   //    csvRows.push(values);
-   console.log(csvRows);
-   // Returning the array joining with new line
-   return csvRows.join("\n");
-  };
 
-  function download() {
-   if (flag == 0 && download_flag == 1) {
-    clearInterval(Interval);
-    tens = "00";
-    seconds = "00";
-    appendTens.innerHTML = tens;
-    appendSeconds.innerHTML = seconds;
-    const csvdata = csvmaker(record_data);
-    // console.log(csvdata);
-    download_file(csvdata);
-   }
-  }
-  //   function update3d(sensor){
-  //     var Ax = BLEsense['accelerometer'].data.Ax.latest() * 0.0174533;
-  //     var Ay = BLEsense['accelerometer'].data.Ay.latest() * 0.0174533;
-  //     var Az = BLEsense['accelerometer'].data.Az.latest() * 0.0174533;
-  //     var pitch = Math.atan2((-Ax) , Math.sqrt(Ay * Ay + Az * Az));
-  //     var roll = Math.atan2(Ay , Az);
-  //     arduinoModel.rotation.x = roll;
-  //     arduinoModel.rotation.y = pitch;
-  //     arduinoModel.rotation.z = 0;
-  //     renderer.render(scene, camera);
-  //   }
+    const gyroTraces = [
+      { x: [], y: [], mode: 'lines', name: 'X', line: { color: '#ffa600', width: 2 } },
+      { x: [], y: [], mode: 'lines', name: 'Y', line: { color: '#7d3cff', width: 2 } },
+      { x: [], y: [], mode: 'lines', name: 'Z', line: { color: '#00a86b', width: 2 } },
+    ];
 
-  function bytes() {
-   if (bytesReceived > bytesPrevious) {
-    bytesPrevious = bytesReceived;
-    msg(bytesReceived + " bytes received");
-   }
-  }
+    Plotly.newPlot('accelerometer', accelTraces, Object.assign({}, commonLayout, {
+      yaxis: { title: 'Acceleration' },
+      xaxis: { type: 'date', tickformat: '%H:%M:%S' }
+    }), { responsive: true, displayModeBar: false });
 
-  function write_to_file(sensor) {
-   if (flag == 1) {
-    // console.log(sensor);
-    // BLEsense[sensor].data[label]
-    // console.log(
-    //  BLEsense[sensor].data["Ax"],
-    //  BLEsense[sensor].data["Ay"],
-    //  BLEsense[sensor].data["Az"]
-    // );
-    // let json_data_file = {
-    //     "timestamp":timestamp_count,
-    //     "X":BLEsense[sensor].data["Ax"],
-    //     "Y":BLEsense[sensor].data["Ay"],
-    //     "Z":BLEsense[sensor].data["Az"]
-    // }
-    // record_data.push(json_data_file)
-    record_data.timestamp.push(timestamp_count);
-    record_data.X.push(BLEsense[sensor].data["Ax"][63]);
-    record_data.Y.push(BLEsense[sensor].data["Ay"][63]);
-    record_data.Z.push(BLEsense[sensor].data["Az"][63]);
-    timestamp_count += 1000 / 30;
-   }
-  }
+    Plotly.newPlot('gyroscope', gyroTraces, Object.assign({}, commonLayout, {
+      yaxis: { title: 'Gyro (°/s)' },
+      xaxis: { type: 'date', tickformat: '%H:%M:%S' }
+    }), { responsive: true, displayModeBar: false });
+  },
 
-  var skip_frame = false;
-  function draw() {
-   function updateViz(sensor, fns) {
-    if (BLEsense[sensor].rendered == false) {
-     // only render if new values are received
-     fns.forEach(function (fn) {
-      fn(sensor);
-     });
-     BLEsense[sensor].rendered = true;
+  methods: {
+    // Toggle connection
+    async toggleConnection() {
+      if (this.bleConnected) {
+        await this.disconnectBLE();
+      } else {
+        await this.connectBLE();
+      }
+    },
+
+    // Connect: request device, connect, start notifications
+    async connectBLE() {
+      if (!navigator.bluetooth) {
+        alert('Web Bluetooth not supported. Use Chrome/Edge on desktop or Android.');
+        return;
+      }
+
+      try {
+        this.connecting = true;
+        this.device = await navigator.bluetooth.requestDevice({
+          filters: [{ name: 'XiaoMultiSense' }],
+          optionalServices: [SERVICE_UUID]
+        });
+
+        this.device.addEventListener('gattserverdisconnected', () => {
+          this._cleanupAfterDisconnect();
+        });
+
+        this.server = await this.device.gatt.connect();
+
+        const service = await this.server.getPrimaryService(SERVICE_UUID);
+
+        this.accelChar = await service.getCharacteristic(ACCEL_UUID);
+        this.gyroChar  = await service.getCharacteristic(GYRO_UUID);
+
+        // store bound handlers so we can remove them later
+        this._onAccel = (e) => this.handleAccel(e);
+        this._onGyro  = (e) => this.handleGyro(e);
+
+        await this.accelChar.startNotifications();
+        this.accelChar.addEventListener('characteristicvaluechanged', this._onAccel);
+
+        await this.gyroChar.startNotifications();
+        this.gyroChar.addEventListener('characteristicvaluechanged', this._onGyro);
+
+        this.bleConnected = true;
+      } catch (err) {
+        console.error('connectBLE error', err);
+        alert('Connection failed: ' + (err && err.message ? err.message : err));
+        this._cleanupAfterDisconnect();
+      } finally {
+        this.connecting = false;
+      }
+    },
+
+    // Disconnect cleanly and remove listeners
+    async disconnectBLE() {
+      try {
+        if (this.accelChar) {
+          try { await this.accelChar.stopNotifications(); } catch(e) {}
+          if (this._onAccel) this.accelChar.removeEventListener('characteristicvaluechanged', this._onAccel);
+          this._onAccel = null;
+        }
+        if (this.gyroChar) {
+          try { await this.gyroChar.stopNotifications(); } catch(e) {}
+          if (this._onGyro) this.gyroChar.removeEventListener('characteristicvaluechanged', this._onGyro);
+          this._onGyro = null;
+        }
+        if (this.device && this.device.gatt && this.device.gatt.connected) {
+          this.device.gatt.disconnect();
+        }
+      } catch (err) {
+        console.warn('disconnect error', err);
+      }
+      this._cleanupAfterDisconnect();
+    },
+
+    _cleanupAfterDisconnect() {
+      this.bleConnected = false;
+      this.device = null;
+      this.server = null;
+      this.accelChar = null;
+      this.gyroChar = null;
+      this._onAccel = null;
+      this._onGyro = null;
+    },
+
+    // push a point onto each trace efficiently (Plotly handles rolling window)
+    _extendAccel(ax, ay, az) {
+      const t = new Date();
+      Plotly.extendTraces('accelerometer', {
+        x: [[t],[t],[t]],
+        y: [[ax],[ay],[az]]
+      }, [0,1,2], this.MAX_POINTS);
+    },
+
+    _extendGyro(gx, gy, gz) {
+      const t = new Date();
+      Plotly.extendTraces('gyroscope', {
+        x: [[t],[t],[t]],
+        y: [[gx],[gy],[gz]]
+      }, [0,1,2], this.MAX_POINTS);
+    },
+
+    // --- notification handlers ---
+
+    handleAccel(event) {
+      try {
+        const dv = event.target.value;
+        const ax = dv.getFloat32(0, true);
+        const ay = dv.getFloat32(4, true);
+        const az = dv.getFloat32(8, true);
+
+        // store latest samples to combine with gyro rows for CSV
+        this.latestAccel = { time: new Date(), ax, ay, az };
+
+        // plot
+        this._extendAccel(ax, ay, az);
+
+        // record CSV row if recording ON,
+        // include latest gyro values if available, otherwise empty strings
+        if (this.recording) {
+          const row = {
+            time: this.latestAccel.time.toISOString(),
+            ax: ax.toFixed(6),
+            ay: ay.toFixed(6),
+            az: az.toFixed(6),
+            gx: (this.latestGyro && this.latestGyro.gx != null) ? this.latestGyro.gx.toFixed(6) : '',
+            gy: (this.latestGyro && this.latestGyro.gy != null) ? this.latestGyro.gy.toFixed(6) : '',
+            gz: (this.latestGyro && this.latestGyro.gz != null) ? this.latestGyro.gz.toFixed(6) : ''
+          };
+          this.recordedRows.push(row);
+        }
+      } catch (err) {
+        console.error('handleAccel parse error', err);
+      }
+    },
+
+    handleGyro(event) {
+      try {
+        const dv = event.target.value;
+        const gx = dv.getFloat32(0, true);
+        const gy = dv.getFloat32(4, true);
+        const gz = dv.getFloat32(8, true);
+
+        this.latestGyro = { time: new Date(), gx, gy, gz };
+
+        // plot
+        this._extendGyro(gx, gy, gz);
+
+        // record CSV row if recording ON,
+        // include latest accel values if available
+        if (this.recording) {
+          const row = {
+            time: this.latestGyro.time.toISOString(),
+            ax: (this.latestAccel && this.latestAccel.ax != null) ? this.latestAccel.ax.toFixed(6) : '',
+            ay: (this.latestAccel && this.latestAccel.ay != null) ? this.latestAccel.ay.toFixed(6) : '',
+            az: (this.latestAccel && this.latestAccel.az != null) ? this.latestAccel.az.toFixed(6) : '',
+            gx: gx.toFixed(6),
+            gy: gy.toFixed(6),
+            gz: gz.toFixed(6)
+          };
+          this.recordedRows.push(row);
+        }
+      } catch (err) {
+        console.error('handleGyro parse error', err);
+      }
+    },
+
+    // start/stop recording & stopwatch
+    startRecording() {
+      this.recordedRows = [];
+      this.recording = true;
+      this.stopwatchStart = Date.now();
+      this.stopwatchMs = 0;
+      if (this.stopwatchTimer) clearInterval(this.stopwatchTimer);
+      this.stopwatchTimer = setInterval(() => {
+        this.stopwatchMs = Date.now() - this.stopwatchStart;
+      }, 50);
+    },
+
+    stopRecording() {
+      this.recording = false;
+      if (this.stopwatchTimer) { clearInterval(this.stopwatchTimer); this.stopwatchTimer = null; }
+    },
+
+    // CSV download — builds a clean CSV and includes UTF-8 BOM for Excel compatibility
+    downloadCSV() {
+      if (!this.recordedRows || this.recordedRows.length === 0) {
+        alert('No recorded rows available. Start recording first.');
+        return;
+      }
+
+      const header = ['time','ax','ay','az','gx','gy','gz'];
+      const lines = [header.join(',')];
+
+      for (const r of this.recordedRows) {
+        // ensure each field is safe (no newline), numeric fields are strings or empty
+        const fields = [
+          r.time,
+          r.ax === '' ? '' : r.ax,
+          r.ay === '' ? '' : r.ay,
+          r.az === '' ? '' : r.az,
+          r.gx === '' ? '' : r.gx,
+          r.gy === '' ? '' : r.gy,
+          r.gz === '' ? '' : r.gz
+        ];
+        lines.push(fields.join(','));
+      }
+
+      const csv = lines.join('\r\n'); // CRLF for Excel compatibility
+      // add BOM so Excel opens UTF-8 correctly
+      const blob = new Blob(['\uFEFF', csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'imu_record.csv';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
     }
-   }
-   if (skip_frame == false) {
-    // TODO update with fuction to iterate object with viz function as a property
-    //   updateViz('colorimeter', [colorBars]);
-    //   updateViz('microphone', [spectrumAnalyser]);
-    updateViz("gyroscope", [graph]);
-    updateViz("accelerometer", [graph, write_to_file]);
-    //   updateViz('proximity', [digit]);
-    //   updateViz('temperature', [graph,digit]);
-    //   updateViz('humidity', [graph,digit]);
-    //   updateViz('pressure', [graph,digit]);
-    //   bytes();
-
-    skip_frame = true; // render alternate frames = 30fps
-   } else {
-    skip_frame = false;
-   }
-   requestAnimationFrame(draw);
   }
-
-  initGraph("accelerometer");
-  initGraph("gyroscope");
-  //   initGraph('temperature');
-  //   initGraph('humidity');
-  //   initGraph('pressure');
-  //   initSpectrum();
-  //   init3D();
-  requestAnimationFrame(draw);
- </script>
+}).mount('#app');
+</script>
+</body>
 </html>
