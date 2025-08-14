@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>BLE Accelerometer Dashboard</title>
+
+  <!-- Tailwind for quick styling -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Plotly (modern explicit version) -->
+  <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+  <!-- Vue 3 global -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+
+  <style>
+    body { background:#0b1220; color:#e6eef8; font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; }
+    .card { background: #0f1724; border-radius: 12px; padding: 18px; box-shadow: 0 8px 30px rgba(2,6,23,0.6); }
+    .sidebar-card { background: #0b1220; border-radius: 10px; padding: 16px; }
+    button.primary { background: linear-gradient(90deg,#2563eb,#7c3aed); color:#fff; padding:8px 14px; border-radius:8px; border:0; }
+    button.danger { background:#ef4444; color:#fff; padding:8px 14px; border-radius:8px; border:0; }
+    .small-muted { color:#9ca3af; font-size:0.9rem; }
+  </style>
+</head>
+<body>
+  <div id="app" class="min-h-screen flex flex-col md:flex-row">
+    <!-- Sidebar -->
+    <aside class="w-full md:w-72 p-6">
+      <div class="sidebar-card">
+        <h2 class="text-lg font-semibold mb-4">Sensor Controller</h2>
+
+        <div class="space-y-3">
+          <button @click="toggleConnection" :class="['w-full', 'py-2', 'rounded-md', 'text-white', bleConnected ? 'bg-red-600 hover:bg-red-700' : 'bg-sky-600 hover:bg-sky-700']">
+            {{ bleConnected ? 'Disconnect BLE' : 'Connect BLE' }}
+          </button>
+
+          <div class="grid grid-cols-1 gap-2 mt-2">
+            <button @click="startRecording" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-md">Start Recording</button>
+            <button @click="stopRecording" class="w-full bg-amber-600 hover:bg-amber-700 text-white py-2 rounded-md">Stop Recording</button>
+            <button @click="downloadCSV" class="w-full bg-gray-700 hover:bg-gray-600 text-white py-2 rounded-md">Download CSV</button>
+          </div>
+
+          <div class="mt-4 small-muted">
+            <div>Stopwatch</div>
+            <div class="font-mono mt-2 text-lg">{{ formattedTime }}</div>
+          </div>
+
+          <div class="mt-4 small-muted">
+            <div>Status: <span :class="bleConnected ? 'text-green-400' : 'text-yellow-300'">{{ bleConnected ? 'Connected' : (connecting ? 'Connecting...' : 'Disconnected') }}</span></div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="flex-1 p-6">
+      <!-- MODIFIED: Title updated -->
+      <h1 class="text-2xl font-semibold mb-4">Live Accelerometer Data</h1>
+
+      <div class="grid grid-cols-1 gap-6">
+        <section class="card">
+          <h3 class="text-lg font-medium mb-2">Accelerometer</h3>
+          <div id="accelerometer" style="width:100%;height:360px;"></div>
+        </section>
+
+        <!-- REMOVED: Gyroscope section was here -->
+      </div>
+    </main>
+  </div>
+
+<script>
+/*
+ Single-file BLE+Plotly+CSV dashboard for Accelerometer ONLY.
+
+ - Connects to T-Watch-Sense (filters by name).
+ - Uses the service and char UUIDs for accelerometer.
+ - Updates Plotly efficiently using extendTraces.
+ - Records CSV rows with timestamp and ax, ay, az values.
+*/
+
+// MODIFIED: UUIDs updated
+const SERVICE_UUID = '6fbe1da7-0000-44de-92c4-bb6e04fb0212';
+const ACCEL_UUID   = '6fbe1da7-3001-44de-92c4-bb6e04fb0212';
+// REMOVED: GYRO_UUID was here
+
+const { createApp } = Vue;
+
+createApp({
+  data() {
+    return {
+      // BLE state
+      bleConnected: false,
+      connecting: false,
+      device: null,
+      server: null,
+      accelChar: null,
+      // REMOVED: gyroChar
+      _onAccel: null,
+      // REMOVED: _onGyro
+
+      // plotting
+      MAX_POINTS: 100,
+
+      // recording
+      recording: false,
+      recordedRows: [],
+
+      // stopwatch
+      stopwatchStart: 0,
+      stopwatchMs: 0,
+      stopwatchTimer: null
+    };
+  },
+
+  computed: {
+    formattedTime() {
+      const ms = this.stopwatchMs % 1000;
+      const totalSeconds = Math.floor(this.stopwatchMs / 1000);
+      const s = totalSeconds % 60;
+      const m = Math.floor(totalSeconds / 60);
+      return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}.${String(Math.floor(ms/10)).padStart(2,'0')}`;
+    }
+  },
+
+  mounted() {
+    const commonLayout = {
+      margin: { t: 20, r: 30, l: 60, b: 40 },
+      paper_bgcolor: '#0f1724',
+      plot_bgcolor: '#0f1724',
+      font: { color: '#e6eef8' },
+      legend: { orientation: 'h', x: 0.01, y: 1.08 }
+    };
+
+    const accelTraces = [
+      { x: [], y: [], mode: 'lines', name: 'X', line: { color: '#ff6384', width: 2 } },
+      { x: [], y: [], mode: 'lines', name: 'Y', line: { color: '#36a2eb', width: 2 } },
+      { x: [], y: [], mode: 'lines', name: 'Z', line: { color: '#4bc0c0', width: 2 } },
+    ];
+
+    Plotly.newPlot('accelerometer', accelTraces, Object.assign({}, commonLayout, {
+      yaxis: { title: 'Acceleration (G)' },
+      xaxis: { type: 'date', tickformat: '%H:%M:%S' }
+    }), { responsive: true, displayModeBar: false });
+
+    // REMOVED: Gyroscope chart initialization was here
+  },
+
+  methods: {
+    async toggleConnection() {
+      if (this.bleConnected) {
+        await this.disconnectBLE();
+      } else {
+        await this.connectBLE();
+      }
+    },
+
+    async connectBLE() {
+      if (!navigator.bluetooth) {
+        alert('Web Bluetooth not supported. Use Chrome/Edge on desktop or Android.');
+        return;
+      }
+
+      try {
+        this.connecting = true;
+        // MODIFIED: Device name filter updated to "T-Watch-Sense"
+        this.device = await navigator.bluetooth.requestDevice({
+          filters: [{ name: 'TPL-Watch' }],
+          optionalServices: [SERVICE_UUID]
+        });
+
+        this.device.addEventListener('gattserverdisconnected', () => this._cleanupAfterDisconnect());
+        this.server = await this.device.gatt.connect();
+        const service = await this.server.getPrimaryService(SERVICE_UUID);
+        this.accelChar = await service.getCharacteristic(ACCEL_UUID);
+        
+        this._onAccel = (e) => this.handleAccel(e);
+
+        await this.accelChar.startNotifications();
+        this.accelChar.addEventListener('characteristicvaluechanged', this._onAccel);
+
+        this.bleConnected = true;
+      } catch (err) {
+        console.error('connectBLE error', err);
+        alert('Connection failed: ' + (err && err.message ? err.message : err));
+        this._cleanupAfterDisconnect();
+      } finally {
+        this.connecting = false;
+      }
+    },
+
+    async disconnectBLE() {
+      try {
+        if (this.accelChar) {
+          try { await this.accelChar.stopNotifications(); } catch(e) {}
+          if (this._onAccel) this.accelChar.removeEventListener('characteristicvaluechanged', this._onAccel);
+        }
+        if (this.device && this.device.gatt && this.device.gatt.connected) {
+          this.device.gatt.disconnect();
+        }
+      } catch (err) {
+        console.warn('disconnect error', err);
+      }
+      this._cleanupAfterDisconnect();
+    },
+
+    _cleanupAfterDisconnect() {
+      this.bleConnected = false;
+      this.device = null;
+      this.server = null;
+      this.accelChar = null;
+      this._onAccel = null;
+    },
+
+    _extendAccel(ax, ay, az) {
+      const t = new Date();
+      Plotly.extendTraces('accelerometer', {
+        x: [[t],[t],[t]],
+        y: [[ax],[ay],[az]]
+      }, [0,1,2], this.MAX_POINTS);
+    },
+
+    // REMOVED: _extendGyro method was here
+
+    handleAccel(event) {
+      try {
+        const dv = event.target.value;
+        // The T-Watch code sends 3 floats (4 bytes each), starting at byte 0.
+        const ax = dv.getFloat32(0, true); // true for little-endian
+        const ay = dv.getFloat32(4, true);
+        const az = dv.getFloat32(8, true);
+
+        this._extendAccel(ax, ay, az);
+
+        if (this.recording) {
+          // MODIFIED: Simplified CSV row
+          const row = {
+            time: new Date().toISOString(),
+            ax: ax.toFixed(6),
+            ay: ay.toFixed(6),
+            az: az.toFixed(6),
+          };
+          this.recordedRows.push(row);
+        }
+      } catch (err) {
+        console.error('handleAccel parse error', err);
+      }
+    },
+
+    // REMOVED: handleGyro method was here
+
+    startRecording() {
+      this.recordedRows = [];
+      this.recording = true;
+      this.stopwatchStart = Date.now();
+      this.stopwatchMs = 0;
+      if (this.stopwatchTimer) clearInterval(this.stopwatchTimer);
+      this.stopwatchTimer = setInterval(() => {
+        this.stopwatchMs = Date.now() - this.stopwatchStart;
+      }, 50);
+    },
+
+    stopRecording() {
+      this.recording = false;
+      if (this.stopwatchTimer) { clearInterval(this.stopwatchTimer); this.stopwatchTimer = null; }
+    },
+
+    downloadCSV() {
+      if (!this.recordedRows || this.recordedRows.length === 0) {
+        alert('No recorded rows available. Start recording first.');
+        return;
+      }
+      
+      // MODIFIED: Simplified CSV header
+      const header = ['time','ax','ay','az'];
+      const lines = [header.join(',')];
+
+      for (const r of this.recordedRows) {
+        // MODIFIED: Simplified CSV fields
+        const fields = [ r.time, r.ax, r.ay, r.az ];
+        lines.push(fields.join(','));
+      }
+
+      const csv = lines.join('\r\n');
+      const blob = new Blob(['\uFEFF', csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'accelerometer_record.csv';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+  }
+}).mount('#app');
+</script>
+</body>
+</html>
